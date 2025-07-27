@@ -1,17 +1,14 @@
 .simple-footer {
     background-color: #a8336e;
-    /* position: absolute; */
-    /* bottom: 0; */
-    /* left: 0; */
-    /* right: 0; */
     z-index: 10;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 80px;
-    width: 100vw;
+    width: 100%;  
     position: static;
   }
+  
   
   .simple-footer.mobile {
     height: 50px;

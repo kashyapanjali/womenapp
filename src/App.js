@@ -24,6 +24,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [isWeb, setIsWeb] = useState(true);
+
   const [user, setUser] = useState(() => {
     if (localStorage.getItem("user")) {
       return JSON.parse(localStorage.getItem("user"));
@@ -107,10 +108,8 @@ function App() {
             windowWidth={windowWidth}
             onSignInClick={() => setShowSignIn(true)}
           />
-
-          <Banner isWeb={isWeb} />
-
           <div className="main-content">
+            <Banner isWeb={isWeb} />
             <CategoryFilter
               categories={womenCategories}
               activeCategory={activeCategory}
@@ -134,6 +133,7 @@ function App() {
             />
           </div>
 
+           {/* footer section */}
           <Footer isWeb={isWeb} />
 
           {showCart && (
