@@ -1,0 +1,96 @@
+.banner {
+  height: 90vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.banner-background {
+  height: 100%;
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
+}
+
+.banner-arrows {
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 2;
+}
+
+.arrow-button {
+  background-color: rgba(0, 0, 0, 0.4);
+  border: none;
+  color: white;
+  font-size: 20px;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+}
+
+.banner-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: white;
+  padding: 40px 20px;
+  max-width: 800px;
+  margin: auto;
+}
+
+.banner-title {
+  font-size: 42px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.banner-description {
+  font-size: 20px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+  text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+.banner-button {
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.banner-indicators {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.banner-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.banner-indicator.active {
+  background-color: white;
+}
