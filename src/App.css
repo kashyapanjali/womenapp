@@ -1,4 +1,8 @@
 
+html, body, #root, .app-container {
+  width: 100%;
+  overflow-x: hidden;
+}
 .app-container {
     background-color: #f8f0f5;
     min-height: 100vh;

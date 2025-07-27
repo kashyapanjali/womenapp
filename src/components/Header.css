@@ -17,7 +17,9 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* ❗ prevent wrapping */
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .header-left {
@@ -42,10 +44,12 @@
   }
   
   .header-center {
-    flex: 1;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
     padding: 10px;
-    max-width: 600px;
   }
+  
   
   .search-bar {
     display: flex;
@@ -94,11 +98,12 @@
     align-items: center;
     cursor: pointer;
   }
-  
+ 
   .header-right {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-shrink: 0; /* Do not shrink, keep it right-aligned */
   }
   
   .sign-in {
