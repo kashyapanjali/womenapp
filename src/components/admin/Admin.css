@@ -1,0 +1,32 @@
+.admin-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .admin-nav {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .admin-nav button {
+    padding: 10px 20px;
+    border: 1px solid #a8336e;
+    background-color: white;
+    color: #a8336e;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .admin-nav button.active,
+  .admin-nav button:hover {
+    background-color: #a8336e;
+    color: white;
+  }
+  
+  .admin-content {
+    margin-top: 20px;
+  }
+  
