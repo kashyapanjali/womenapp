@@ -44,7 +44,7 @@
   }
   
   .header-center {
-    flex-grow: 1;
+    flex-grow: 0.5;
     flex-shrink: 1;
     min-width: 0;
     padding: 10px;
