@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import AddProduct from "./AddProduct";
-import ProductList from "./ProductList";
+import ProductList from "./AdminProductList";
 import "./Admin.css";
 
 const Admin = () => {

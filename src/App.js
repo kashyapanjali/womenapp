@@ -8,7 +8,7 @@ import Footer from "./components/Footer";
 import Cart from "./components/Cart";
 import SignInSignup from "./components/Login";
 import CategoryFilter from "./components/CategoryFilter";
-import Admin from "./components/admin/AddProduct";
+import Admin from "./components/admin/Admin";
 import { products } from "./data/product";
 
 if (typeof window !== "undefined") {

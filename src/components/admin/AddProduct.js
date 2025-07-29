@@ -88,8 +88,8 @@ const AddProduct = () => {
           />
           Featured Product?
         </label>
-
-        <button type="submit">Add Product</button>
+         <div className="btn"><button type="submit">Add Product</button>
+         </div>
       </form>
     </div>
   );
