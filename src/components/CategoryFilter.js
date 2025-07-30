@@ -1,6 +1,7 @@
 import React from "react";
 import "./CategoryFilter.css";
 
+//list of dummy category
 const categories = [
   { id: "all", name: "All" },
   { id: "menstrual", name: "Menstrual Care" },
@@ -9,7 +10,9 @@ const categories = [
   { id: "food", name: "Health Food" },
 ];
 
-const CategoryFilter = ({ activeCategory, setActiveCategory }) => {
+
+//here two props passed from productList.js
+function CategoryFilter ({ activeCategory, setActiveCategory }){
   return (
     <div className="category-filter">
       <h2 className="filter-title">Women Products</h2>

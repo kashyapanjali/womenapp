@@ -8,9 +8,15 @@ import Footer from "./components/Footer";
 import Cart from "./components/Cart";
 import SignInSignup from "./components/Login";
 import CategoryFilter from "./components/CategoryFilter";
+
+//Admin Dashboard
 import Admin from "./components/admin/Admin";
+
+//dummy product
 import { products } from "./data/product";
 
+
+//window size define for the local storage
 if (typeof window !== "undefined") {
   localStorage.clear();
 }
@@ -25,14 +31,18 @@ function App() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [isWeb, setIsWeb] = useState(true);
 
+
+  //it can define which is admin or not
   const [user, setUser] = useState(() => {
     if (localStorage.getItem("user")) {
       return JSON.parse(localStorage.getItem("user"));
     }
     return null;
   });
+
   const isAdmin = user && user.role === "admin";
 
+  //dummy category
   const womenCategories = [
     { id: "all", name: "All Products" },
     { id: "menstrual", name: "Menstrual Care" },
@@ -127,7 +137,7 @@ function App() {
               activeCategory={activeCategory}
               setActiveCategory={setActiveCategory}
               searchTerm={searchTerm}
-              addToCart={addToCart}
+              onAddToCart={addToCart}
               isWeb={isWeb}
               windowWidth={windowWidth}
             />

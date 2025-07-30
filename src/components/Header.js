@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { FaBars, FaTimes, FaSearch, FaUser, FaShoppingCart, FaChevronDown, FaMapMarker, FaGift, FaLeaf, FaMedkit, FaShieldAlt, FaHeart, FaFileAlt, FaSignOutAlt } from "react-icons/fa";
 import "./Header.css";
 
-const Header = ({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propWindowWidth, onSignInClick }) => {
+function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propWindowWidth, onSignInClick }){
   const [searchText, setSearchText] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);

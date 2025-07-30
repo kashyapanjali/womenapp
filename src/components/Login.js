@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./Login.css";
 
-const Login = ({ onClose, onAuthenticated }) => {
+function Login({ onClose, onAuthenticated }){
   const [isSignUp, setIsSignUp] = useState(false);
   const [registerAsAdmin, setRegisterAsAdmin] = useState(false);
   const [formData, setFormData] = useState({
@@ -59,6 +59,7 @@ const Login = ({ onClose, onAuthenticated }) => {
     setRegisterAsAdmin(false);
     setFormData({ name: "", email: "", password: "" });
   };
+
 
   return (
     <div className="auth-container">

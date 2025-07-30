@@ -29,7 +29,7 @@ const bannerProducts = [
   },
 ];
 
-const Banner = () => {
+function Banner(){
   const [currentSlide, setCurrentSlide] = useState(0);
   const currentProduct = bannerProducts[currentSlide];
 

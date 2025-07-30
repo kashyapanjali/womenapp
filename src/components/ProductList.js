@@ -2,7 +2,9 @@ import React from "react";
 import "./ProductList.css";
 import ProductCard from "./ProductCard";
 
-const ProductList = ({ products, onAddToCart }) => {
+
+//products and addToproduct prop receiving by productList
+function ProductList({ products, onAddToCart }){
   return (
     <div className="product-list">
       {products.length > 0 ? (

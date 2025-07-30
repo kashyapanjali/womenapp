@@ -9,7 +9,7 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 
-const Cart = ({ closeCart }) => {
+function Cart({closeCart}){
   const [cart, setCart] = useState([
     {
       id: 1,

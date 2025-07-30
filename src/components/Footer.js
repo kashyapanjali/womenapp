@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import "./Footer.css";
 
+
+//instead of function use const type and arrow function  //Footer section
 const Footer = ({ isWeb }) => {
   const currentYear = new Date().getFullYear();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);

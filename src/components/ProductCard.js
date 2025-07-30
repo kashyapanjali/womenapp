@@ -2,7 +2,7 @@ import React from "react";
 import "./ProductCard.css";
 import { FaCartPlus } from "react-icons/fa";
 
-const ProductCard = ({ product, onAddToCart }) => {
+function ProductCard({ product, onAddToCart }){
   return (
     <div className="product-card">
       <img
