@@ -17,7 +17,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    flex-wrap: nowrap; /* ❗ prevent wrapping */
+    flex-wrap: nowrap; /*prevent wrapping */
     width: 100%;
     box-sizing: border-box;
   }
@@ -205,11 +205,13 @@
     text-align: left;
   }
   
+
+  /* user dropdown details showing */
   .user-dropdown {
     position: absolute;
     right: 0;
     top: 100%;
-    background: white;
+    background: #e6799f;
     color: #333;
     border-radius: 8px;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
@@ -232,7 +234,7 @@
   }
   
   .user-dropdown button:hover {
-    background-color: #f8e5ee;
+    background-color: #e03484;
   }
   
   .logout {

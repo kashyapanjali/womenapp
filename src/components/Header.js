@@ -96,8 +96,7 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
             <div className="user-profile">
               <button onClick={() => setShowUserMenu(!showUserMenu)} className="user-button">
                 <div>
-                  <span className="user-greet">Hello, {user.name}</span>
-                  <span className="user-account">My Account <FaChevronDown /></span>
+                  <span className="user-greet">Hello, {user.name}<FaChevronDown /></span>
                 </div>
               </button>
               {showUserMenu && (
