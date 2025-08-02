@@ -2,7 +2,7 @@
 //All the apis added here
 
 // API endpoint exports for frontend use
-// Base URL (change if needed)
+// Base URL
 export const BASE_URL = 'http://localhost:3000/api';
 
 // User Authentication & Profile

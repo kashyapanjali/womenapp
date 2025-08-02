@@ -108,3 +108,23 @@
   color: #a8336e;
   font-weight: bold;
 }
+
+.error-message {
+  background-color: #fee;
+  color: #c33;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #fcc;
+  font-size: 14px;
+}
+
+.success-message {
+  background-color: #efe;
+  color: #363;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #cfc;
+  font-size: 14px;
+}

@@ -1,14 +1,22 @@
 import React, { useState } from "react";
+import authService from "../api/authService";
 import "./Login.css";
 
 function Login({ onClose, onAuthenticated }){
   const [isSignUp, setIsSignUp] = useState(false);
   const [registerAsAdmin, setRegisterAsAdmin] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+
+  //form data to give the user input as an login for so that they can login and signup
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
+  
+
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field, value) => {
@@ -18,33 +26,65 @@ function Login({ onClose, onAuthenticated }){
     }));
   };
 
+
+
   const triggerStorageEvent = () => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("storage"));
     }
   };
 
+
+
+  //register by utility function of authservices
   const register = async () => {
     try {
       setLoading(true);
-      // TODO: your register logic here
+      setError("");
+      setSuccess("");
+      
+      if (registerAsAdmin) {
+        await authService.registerAdmin(formData);
+      } else {
+        await authService.registerUser(formData);
+      }
+      
+      setSuccess("Account created successfully! Please login.");
+      setIsSignUp(false);
+      setFormData({ name: "", email: "", password: "" });
     } catch (error) {
-      alert(error.message || "Failed to create account");
+      setError(error.message || "Failed to create account");
     } finally {
       setLoading(false);
     }
   };
 
+
+  //login by utility function of authservices
   const login = async () => {
     try {
       setLoading(true);
-      // TODO: your login logic here
+      setError("");
+      
+      await authService.login({
+        email: formData.email,
+        password: formData.password,
+      });
+      
+      // Trigger storage event to update header
+      window.dispatchEvent(new Event("storage"));
+      
+      // Call the onAuthenticated callback
+      if (onAuthenticated) {
+        onAuthenticated();
+      }
     } catch (error) {
-      alert(error.message || "Failed to login");
+      setError(error.message || "Failed to login");
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleSubmit = () => {
     if (isSignUp) {
@@ -54,6 +94,7 @@ function Login({ onClose, onAuthenticated }){
     }
   };
 
+  
   const toggleForm = () => {
     setIsSignUp((prev) => !prev);
     setRegisterAsAdmin(false);
@@ -72,6 +113,18 @@ function Login({ onClose, onAuthenticated }){
         <div className="auth-form">
           <h2>{isSignUp ? "Create Account" : "Welcome Back"}</h2>
           <p>{isSignUp ? "Join our community of women" : "Sign in to your account"}</p>
+
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="success-message">
+              {success}
+            </div>
+          )}
 
           {isSignUp && (
             <input

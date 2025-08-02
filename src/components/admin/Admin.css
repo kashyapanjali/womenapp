@@ -3,6 +3,34 @@
     font-family: Arial, sans-serif;
   }
   
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #a8336e;
+  }
+  
+  .admin-header h1 {
+    color: #a8336e;
+    margin: 0;
+  }
+  
+  .logout-btn {
+    background-color: #e84a80;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .logout-btn:hover {
+    background-color: #d13d6e;
+  }
+  
   .admin-nav {
     display: flex;
     gap: 16px;

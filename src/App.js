@@ -16,10 +16,7 @@ import Admin from "./components/admin/Admin";
 import { products } from "./data/product";
 
 
-//window size define for the local storage
-if (typeof window !== "undefined") {
-  localStorage.clear();
-}
+// Remove the localStorage.clear() - this was preventing authentication from persisting
 
 function App() {
   const [showCart, setShowCart] = useState(false);
@@ -50,6 +47,27 @@ function App() {
     { id: "wellness", name: "Wellness" },
     { id: "food", name: "Health Foods" },
   ];
+
+  // Listen for authentication changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        setUser(JSON.parse(userData));
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    };
+
+    // Check initial state
+    handleStorageChange();
+
+    // Listen for storage events
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {

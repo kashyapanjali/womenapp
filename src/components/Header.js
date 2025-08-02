@@ -1,9 +1,12 @@
 // components/Header.jsx
 import React, { useEffect, useState } from "react";
+import authService from "../api/authService";
 import { FaBars, FaTimes, FaSearch, FaUser, FaShoppingCart, FaChevronDown, FaMapMarker, FaGift, FaLeaf, FaMedkit, FaShieldAlt, FaHeart, FaFileAlt, FaSignOutAlt } from "react-icons/fa";
 import "./Header.css";
 
+
 function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propWindowWidth, onSignInClick }){
+
   const [searchText, setSearchText] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -11,6 +14,7 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
   const windowWidth = propWindowWidth || window.innerWidth;
   const isMobile = !isWeb || windowWidth < 768;
 
+  //useEffect to get the user data from the local storage
   useEffect(() => {
     const userData = localStorage.getItem('user');
     const token = localStorage.getItem('token');
@@ -21,6 +25,8 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
     }
   }, []);
 
+
+  //useEffect to listen for storage changes
   useEffect(() => {
     const handleStorageChange = () => {
       const userData = localStorage.getItem('user');
@@ -31,23 +37,27 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
         setUser(null);
       }
     };
+    //listen for storage changes
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+
+  //logout by utility function of authservices
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    authService.logout();
     setUser(null);
     setShowUserMenu(false);
     window.dispatchEvent(new Event("storage"));
     window.location.reload();
   };
 
+
   const handleSearch = (text) => {
     setSearchText(text);
     onSearch(text);
   };
+
 
   return (
     <header className="header">
