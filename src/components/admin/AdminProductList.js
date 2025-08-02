@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import productService from "../../api/productService";
+import axios from "axios";
+import { BASE_URL, PRODUCTS_API } from "../../api/api";
 import "./AdminProductList.css";
 
 const ProductList = () => {
@@ -12,22 +13,11 @@ const ProductList = () => {
     try {
       setLoading(true);
       setError("");
-      const productsData = await productService.getAllProducts();
-      setProducts(productsData);
+      const response = await axios.get(`${BASE_URL}${PRODUCTS_API}`);
+      setProducts(response.data);
     } catch (error) {
       console.error("Error fetching products", error);
       setError("Failed to load products");
-      // For testing, add dummy products
-      setProducts([
-        {
-          _id: '1',
-          name: 'Sample Product',
-          price: 29.99,
-          brand: 'Sample Brand',
-          countInStock: 10,
-          image: 'https://placehold.co/200x200'
-        }
-      ]);
     } finally {
       setLoading(false);
     }
@@ -40,7 +30,13 @@ const ProductList = () => {
   const handleDeleteProduct = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await productService.deleteProduct(productId);
+        const token = localStorage.getItem('token');
+        await axios.delete(`${BASE_URL}${PRODUCTS_API}/${productId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
         setProducts(products.filter(product => product._id !== productId));
       } catch (error) {
         console.error('Failed to delete product:', error);

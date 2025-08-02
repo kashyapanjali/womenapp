@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import productService from "../../api/productService";
+import axios from "axios";
+import { BASE_URL, PRODUCTS_API, CATEGORIES_API } from "../../api/api";
 import "./AddProduct.css";
 
 const AddProduct = () => {
@@ -22,17 +23,11 @@ const AddProduct = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const categoriesData = await productService.getAllCategories();
-        setCategories(categoriesData);
+        const response = await axios.get(`${BASE_URL}${CATEGORIES_API}`);
+        setCategories(response.data);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
-        // For testing, add dummy categories
-        setCategories([
-          { _id: '1', name: 'Menstrual Care' },
-          { _id: '2', name: 'Safety' },
-          { _id: '3', name: 'Wellness' },
-          { _id: '4', name: 'Health Food' }
-        ]);
+        setMessage("Failed to load categories");
       }
     };
 
@@ -66,8 +61,14 @@ const AddProduct = () => {
         countInStock: Number(productData.countInStock)
       };
 
-      const result = await productService.addProduct(productToSubmit);
-      setMessage(result.message);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${BASE_URL}${PRODUCTS_API}`, productToSubmit, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      setMessage("✅ " + response.data.message);
       
       // Reset form
       setProductData({
