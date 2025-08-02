@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import productService from "../../api/productService";
 import "./AddProduct.css";
 
 const AddProduct = () => {
@@ -16,12 +16,27 @@ const AddProduct = () => {
 
   const [categories, setCategories] = useState([]);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Fetch categories from backend
   useEffect(() => {
-    // axios.get("/api/categories").then((res) => {
-    //   setCategories(res.data);
-    // });
+    const fetchCategories = async () => {
+      try {
+        const categoriesData = await productService.getAllCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        // For testing, add dummy categories
+        setCategories([
+          { _id: '1', name: 'Menstrual Care' },
+          { _id: '2', name: 'Safety' },
+          { _id: '3', name: 'Wellness' },
+          { _id: '4', name: 'Health Food' }
+        ]);
+      }
+    };
+
+    fetchCategories();
   }, []);
 
   const handleChange = (e) => {
@@ -33,7 +48,43 @@ const AddProduct = () => {
   };
 
   const handleSubmit = async (e) => {
-   
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    try {
+      // Validate required fields
+      if (!productData.name || !productData.price || !productData.category || !productData.countInStock) {
+        setMessage("Please fill in all required fields");
+        return;
+      }
+
+      // Convert price and countInStock to numbers
+      const productToSubmit = {
+        ...productData,
+        price: Number(productData.price),
+        countInStock: Number(productData.countInStock)
+      };
+
+      const result = await productService.addProduct(productToSubmit);
+      setMessage(result.message);
+      
+      // Reset form
+      setProductData({
+        name: "",
+        description: "",
+        image: "",
+        brand: "",
+        price: "",
+        category: "",
+        countInStock: "",
+        isFeatures: false,
+      });
+    } catch (error) {
+      setMessage("❌ " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,7 +117,10 @@ const AddProduct = () => {
           />
           Featured Product?
         </label>
-         <div className="btn"><button type="submit">Add Product</button>
+         <div className="btn">
+           <button type="submit" disabled={loading}>
+             {loading ? "Adding Product..." : "Add Product"}
+           </button>
          </div>
       </form>
     </div>
