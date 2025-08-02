@@ -33,29 +33,7 @@ const AddProduct = () => {
   };
 
   const handleSubmit = async (e) => {
-    // e.preventDefault();
-    // setMessage("");
-
-    // try {
-    //   const token = localStorage.getItem("token"); // assuming admin login stores token
-    //   const response = await axios.post("/api/products", productData, {
-    //     headers: { Authorization: `Bearer ${token}` },
-    //   });
-
-    //   setMessage("✅ " + response.data.message);
-    //   setProductData({
-    //     name: "",
-    //     description: "",
-    //     image: "",
-    //     brand: "",
-    //     price: "",
-    //     category: "",
-    //     countInStock: "",
-    //     isFeatures: false,
-    //   });
-    // } catch (error) {
-    //   setMessage("❌ " + (error.response?.data?.error || "Failed to add product."));
-    // }
+   
   };
 
   return (
