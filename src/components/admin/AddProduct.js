@@ -18,6 +18,8 @@ const AddProduct = () => {
   const [categories, setCategories] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   // Fetch categories from backend
   useEffect(() => {
@@ -26,13 +28,39 @@ const AddProduct = () => {
         const response = await axios.get(`${BASE_URL}${CATEGORIES_API}`);
         setCategories(response.data);
       } catch (error) {
-        console.error('Failed to fetch categories:', error);
         setMessage("Failed to load categories");
       }
     };
-
     fetchCategories();
   }, []);
+
+  // Handle dropdown change
+  const handleCategoryChange = (e) => {
+    if (e.target.value === "__new__") {
+      setShowNewCategoryInput(true);
+      setProductData({ ...productData, category: "" });
+    } else {
+      setShowNewCategoryInput(false);
+      setProductData({ ...productData, category: e.target.value });
+    }
+  };
+
+  // Handle new category submit
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+    try {
+      const response = await axios.post(`${BASE_URL}${CATEGORIES_API}`, {
+        name: newCategoryName.trim(),
+      });
+      setCategories([...categories, response.data]);
+      setProductData({ ...productData, category: response.data._id });
+      setShowNewCategoryInput(false);
+      setNewCategoryName("");
+    } catch (error) {
+      setMessage("Failed to add category");
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -51,6 +79,7 @@ const AddProduct = () => {
       // Validate required fields
       if (!productData.name || !productData.price || !productData.category || !productData.countInStock) {
         setMessage("Please fill in all required fields");
+        setLoading(false);
         return;
       }
 
@@ -69,7 +98,6 @@ const AddProduct = () => {
         }
       });
       setMessage("✅ " + response.data.message);
-      
       // Reset form
       setProductData({
         name: "",
@@ -82,7 +110,7 @@ const AddProduct = () => {
         isFeatures: false,
       });
     } catch (error) {
-      setMessage("❌ " + error.message);
+      setMessage("❌ " + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -100,15 +128,29 @@ const AddProduct = () => {
         <input type="number" name="price" value={productData.price} onChange={handleChange} placeholder="Price" required />
         <input type="number" name="countInStock" value={productData.countInStock} onChange={handleChange} placeholder="Stock Count" required />
 
-        <select name="category" value={productData.category} onChange={handleChange} required>
+        <select name="category" value={productData.category} onChange={handleCategoryChange} required>
           <option value="">Select Category</option>
           {categories.map((cat) => (
             <option key={cat._id} value={cat._id}>
               {cat.name}
             </option>
           ))}
+          <option value="__new__">+ Create new category...</option>
         </select>
-
+        {showNewCategoryInput && (
+          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="New category name"
+              required
+              style={{ flex: 1 }}
+            />
+            <button type="button" onClick={handleAddCategory} style={{ minWidth: 60 }}>Add</button>
+            <button type="button" onClick={() => setShowNewCategoryInput(false)} style={{ minWidth: 60 }}>Cancel</button>
+          </div>
+        )}
         <label className="checkbox">
           <input
             type="checkbox"
@@ -118,11 +160,11 @@ const AddProduct = () => {
           />
           Featured Product?
         </label>
-         <div className="btn">
-           <button type="submit" disabled={loading}>
-             {loading ? "Adding Product..." : "Add Product"}
-           </button>
-         </div>
+        <div className="btn">
+          <button type="submit" disabled={loading}>
+            {loading ? "Adding Product..." : "Add Product"}
+          </button>
+        </div>
       </form>
     </div>
   );
