@@ -338,30 +338,34 @@ const ProductList = () => {
             {products.length === 0 ? (
               <p>No products available</p>
             ) : (
-              products.map((product, index) => (
-                <div className="product-card" key={product._id || index}>
-                  <img src={product.image || "https://placehold.co/200x200"} alt={product.name} />
-                  <h3>{product.name}</h3>
-                  <p className="price">₹{product.price}</p>
-                  <p className="brand">Brand: {product.brand || 'N/A'}</p>
-                  <p className="stock">Stock: {product.countInStock}</p>
-                  
-                  <div className="product-actions">
-                    <button 
-                      className="edit-btn" 
-                      onClick={() => handleEditProduct(product)}
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      className="delete-btn" 
-                      onClick={() => handleDeleteProduct(product._id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
+                             products.map((product, index) => (
+                 <div className="product-card" key={product._id || index}>
+                   <img src={product.image || "https://placehold.co/200x200"} alt={product.name} />
+                   <div className="product-info-container">
+                     <div className="product-details">
+                       <h3>{product.name}</h3>
+                       <p className="price">₹{product.price}</p>
+                       <p className="brand">Brand: {product.brand || 'N/A'}</p>
+                       <p className="stock">Stock: {product.countInStock}</p>
+                     </div>
+                     
+                     <div className="product-actions">
+                       <button 
+                         className="edit-btn" 
+                         onClick={() => handleEditProduct(product)}
+                       >
+                         Edit
+                       </button>
+                       <button 
+                         className="delete-btn" 
+                         onClick={() => handleDeleteProduct(product._id)}
+                       >
+                         Delete
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+               ))
             )}
           </div>
         </>
