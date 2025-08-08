@@ -22,7 +22,7 @@ const AddProduct = () => {
   const [newCategoryName, setNewCategoryName] = useState("");
 
   // Fetch categories from backend
-  useEffect(() => {
+  useEffect(() => {  //this for all users 
     const fetchCategories = async () => {
       try {
         const response = await axios.get(`${BASE_URL}${CATEGORIES_API}`);
@@ -32,6 +32,23 @@ const AddProduct = () => {
       }
     };
     fetchCategories();
+    
+    // Debug: Check authentication status
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+
+    if (user) {
+      const userObj = JSON.parse(user);
+    }
+    
+    // Test JWT token decoding (client-side)
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+      } catch (e) {
+        console.log('Failed to decode JWT:', e);
+      }
+    }
   }, []);
 
   // Handle dropdown change
@@ -50,8 +67,14 @@ const AddProduct = () => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.post(`${BASE_URL}${CATEGORIES_API}`, {
         name: newCategoryName.trim(),
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       setCategories([...categories, response.data]);
       setProductData({ ...productData, category: response.data._id });
@@ -70,6 +93,7 @@ const AddProduct = () => {
     });
   };
 
+  //add product by admin function
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -77,7 +101,7 @@ const AddProduct = () => {
 
     try {
       // Validate required fields
-      if (!productData.name || !productData.price || !productData.category || !productData.countInStock) {
+      if (!productData.name || !productData.description || !productData.price || !productData.category || !productData.countInStock) {
         setMessage("Please fill in all required fields");
         setLoading(false);
         return;
@@ -91,6 +115,8 @@ const AddProduct = () => {
       };
 
       const token = localStorage.getItem('token');
+      
+      //this for admin only to add the product
       const response = await axios.post(`${BASE_URL}${PRODUCTS_API}`, productToSubmit, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -122,7 +148,7 @@ const AddProduct = () => {
       {message && <p className="message">{message}</p>}
       <form onSubmit={handleSubmit} className="product-form">
         <input type="text" name="name" value={productData.name} onChange={handleChange} placeholder="Product Name" required />
-        <input type="text" name="description" value={productData.description} onChange={handleChange} placeholder="Description" />
+        <input type="text" name="description" value={productData.description} onChange={handleChange} placeholder="Description" required />
         <input type="text" name="image" value={productData.image} onChange={handleChange} placeholder="Image URL" />
         <input type="text" name="brand" value={productData.brand} onChange={handleChange} placeholder="Brand" />
         <input type="number" name="price" value={productData.price} onChange={handleChange} placeholder="Price" required />
@@ -130,11 +156,13 @@ const AddProduct = () => {
 
         <select name="category" value={productData.category} onChange={handleCategoryChange} required>
           <option value="">Select Category</option>
-          {categories.map((cat) => (
-            <option key={cat._id} value={cat._id}>
-              {cat.name}
-            </option>
-          ))}
+          {categories
+            .filter((cat) => cat.name !== "New Category")
+            .map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
           <option value="__new__">+ Create new category...</option>
         </select>
         {showNewCategoryInput && (
