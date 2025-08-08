@@ -12,8 +12,8 @@ import CategoryFilter from "./components/CategoryFilter";
 //Admin Dashboard
 import Admin from "./components/admin/Admin";
 
-//dummy product
-import { products } from "./data/product";
+// Remove dummy data import - we'll fetch from API
+// import { products } from "./data/product";
 
 
 // Remove the localStorage.clear() - this was preventing authentication from persisting
@@ -27,6 +27,11 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [isWeb, setIsWeb] = useState(true);
+  
+  // Add state for real products from API
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState("");
 
 
   //it can define which is admin or not
@@ -39,14 +44,46 @@ function App() {
 
   const isAdmin = user && user.role === "admin";
 
-  //dummy category
-  const womenCategories = [
-    { id: "all", name: "All Products" },
-    { id: "menstrual", name: "Menstrual Care" },
-    { id: "safety", name: "Safety" },
-    { id: "wellness", name: "Wellness" },
-    { id: "food", name: "Health Foods" },
-  ];
+  // Categories state for real categories from database
+  const [categories, setCategories] = useState([]);
+  
+  // Fetch categories from API
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/category');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Fetch products from API
+  const fetchProducts = async () => {
+    try {
+      setProductsLoading(true);
+      setProductsError("");
+      const response = await fetch('http://localhost:3000/api/products');
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProductsError('Failed to load products');
+    } finally {
+      setProductsLoading(false);
+    }
+  };
 
   // Listen for authentication changes
   useEffect(() => {
@@ -67,6 +104,22 @@ function App() {
     // Listen for storage events
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  // Fetch products on component mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // Listen for product updates from admin panel
+  useEffect(() => {
+    const handleProductUpdate = () => {
+      fetchProducts();
+    };
+
+    // Listen for custom event when products are updated
+    window.addEventListener('productsUpdated', handleProductUpdate);
+    return () => window.removeEventListener('productsUpdated', handleProductUpdate);
   }, []);
 
   useEffect(() => {
@@ -109,8 +162,19 @@ function App() {
 
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-  const safetyProducts = products.filter((p) => p.category === "safety");
-  const wellnessProducts = products.filter((p) => p.category === "wellness");
+  // Filter products based on category (using category ID from database)
+  const getFilteredProducts = () => {
+    if (activeCategory === "all") {
+      return products;
+    }
+    return products.filter((product) => {
+      // Check if product has category object (from populated data) or category ID
+      const productCategory = product.category?._id || product.category;
+      return productCategory === activeCategory;
+    });
+  };
+
+  const filteredProducts = getFilteredProducts();
 
   return (
     <div className="app-container">
@@ -139,26 +203,42 @@ function App() {
           <div className="main-content">
             <Banner isWeb={isWeb} />
             <CategoryFilter
-              categories={womenCategories}
+              categories={categories}
               activeCategory={activeCategory}
               setActiveCategory={setActiveCategory}
               isWeb={isWeb}
             />
 
-            <ProductList
-              products={
-                activeCategory === "all"
-                  ? products
-                  : products.filter((product) => product.category === activeCategory)
-              }
-              categories={womenCategories}
-              activeCategory={activeCategory}
-              setActiveCategory={setActiveCategory}
-              searchTerm={searchTerm}
-              onAddToCart={addToCart}
-              isWeb={isWeb}
-              windowWidth={windowWidth}
-            />
+            {productsLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <p>Loading products...</p>
+              </div>
+            ) : productsError ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>
+                <p>{productsError}</p>
+                <button onClick={fetchProducts} style={{ 
+                  padding: '10px 20px', 
+                  backgroundColor: '#e84a80', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}>
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <ProductList
+                products={filteredProducts}
+                categories={categories}
+                activeCategory={activeCategory}
+                setActiveCategory={setActiveCategory}
+                searchTerm={searchTerm}
+                onAddToCart={addToCart}
+                isWeb={isWeb}
+                windowWidth={windowWidth}
+              />
+            )}
           </div>
 
            {/* footer section */}

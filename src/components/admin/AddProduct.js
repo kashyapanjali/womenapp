@@ -124,6 +124,10 @@ const AddProduct = () => {
         }
       });
       setMessage("✅ " + response.data.message);
+      
+      // Trigger product update event for ecommerce page
+      window.dispatchEvent(new Event('productsUpdated'));
+      
       // Reset form
       setProductData({
         name: "",

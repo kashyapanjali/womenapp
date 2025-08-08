@@ -13,9 +13,14 @@ function ProductCard({ product, onAddToCart }){
       <div className="product-info">
         <h3 className="product-name">{product.name}</h3>
         <p className="product-desc">{product.description}</p>
-        <p className="product-price">₹{product.price.toFixed(2)}</p>
-        <button className="add-to-cart-btn" onClick={() => onAddToCart(product)}>
-          <FaCartPlus /> Add to Cart
+        <p className="product-price">₹{Number(product.price).toFixed(2)}</p>
+        <button 
+          className="add-to-cart-btn" 
+          onClick={() => onAddToCart(product)}
+          disabled={product.countInStock <= 0}
+        >
+          <FaCartPlus /> 
+          {product.countInStock > 0 ? 'Add to Cart' : 'Out of Stock'}
         </button>
       </div>
     </div>

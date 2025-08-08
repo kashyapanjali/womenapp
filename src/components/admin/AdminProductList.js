@@ -64,6 +64,9 @@ const ProductList = () => {
           }
         });
         setProducts(products.filter(product => product._id !== productId));
+        
+        // Trigger product update event for ecommerce page
+        window.dispatchEvent(new Event('productsUpdated'));
       } catch (error) {
         console.error('Failed to delete product:', error);
         alert('Failed to delete product');
@@ -129,6 +132,9 @@ const ProductList = () => {
       });
       
       setEditMessage("✅ Product updated successfully!");
+      
+      // Trigger product update event for ecommerce page
+      window.dispatchEvent(new Event('productsUpdated'));
       
       // Refresh the product list
       fetchProducts();

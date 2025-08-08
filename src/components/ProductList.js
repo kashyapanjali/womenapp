@@ -10,7 +10,7 @@ function ProductList({ products, onAddToCart }){
       {products.length > 0 ? (
         products.map((product) => (
           <ProductCard
-            key={product.id}
+            key={product._id || product.id} // Use _id from database or fallback to id
             product={product}
             onAddToCart={onAddToCart}
           />
