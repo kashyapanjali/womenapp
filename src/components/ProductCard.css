@@ -2,6 +2,8 @@
     background: linear-gradient(145deg, #fff0f5, #ffe6f0);
     border: 2px solid #e684a3;
     border-radius: 15px;
+    padding: 20px;
+    text-align: center;
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(168, 51, 110, 0.1);
     transition: all 0.3s ease;
@@ -10,7 +12,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    height: 420px;
+    height: 460px;
   }
   
   .product-card:hover {
@@ -27,10 +29,10 @@
     right: 0;
     height: 4px;
     background: linear-gradient(90deg, #e84a80, #a8336e, #4a7de8);
-    z-index: 1;
+    /* z-index: 1; */
   }
   
-  .product-image {
+  .product-image img {
     width: 100%;
     height: 220px;
     object-fit: cover;
@@ -66,7 +68,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    /* -webkit-line-clamp: 2; */
     -webkit-box-orient: vertical;
   }
   
