@@ -14,7 +14,7 @@ html, body, #root, .app-container {
     flex: 1;
     position: relative;
     background-color: white;
-    padding: 0 20px;
+    padding: 5 20px;
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;

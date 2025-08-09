@@ -12,11 +12,9 @@ import CategoryFilter from "./components/CategoryFilter";
 //Admin Dashboard
 import Admin from "./components/admin/Admin";
 
-// Remove dummy data import - we'll fetch from API
-// import { products } from "./data/product";
+//category , product and base url import
+import{CATEGORIES_API, BASE_URL, PRODUCTS_API} from "./api/api";
 
-
-// Remove the localStorage.clear() - this was preventing authentication from persisting
 
 function App() {
   const [showCart, setShowCart] = useState(false);
@@ -32,6 +30,10 @@ function App() {
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState("");
+  // Results returned from Header search (null means no active search)
+  const [searchResults, setSearchResults] = useState(null);
+  // Categories state for real categories from database
+  const [categories, setCategories] = useState([]);
 
 
   //it can define which is admin or not
@@ -44,13 +46,11 @@ function App() {
 
   const isAdmin = user && user.role === "admin";
 
-  // Categories state for real categories from database
-  const [categories, setCategories] = useState([]);
-  
+
   // Fetch categories from API
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/category');
+      const response = await fetch(`${BASE_URL}${CATEGORIES_API}`);
       if (!response.ok) {
         throw new Error('Failed to fetch categories');
       }
@@ -60,18 +60,19 @@ function App() {
       console.error('Error fetching categories:', error);
     }
   };
-
   // Fetch categories on component mount
   useEffect(() => {
     fetchCategories();
   }, []);
+
+
 
   // Fetch products from API
   const fetchProducts = async () => {
     try {
       setProductsLoading(true);
       setProductsError("");
-      const response = await fetch('http://localhost:3000/api/products');
+      const response = await fetch(`${BASE_URL}${PRODUCTS_API}`);
       if (!response.ok) {
         throw new Error('Failed to fetch products');
       }
@@ -84,7 +85,6 @@ function App() {
       setProductsLoading(false);
     }
   };
-
   // Listen for authentication changes
   useEffect(() => {
     const handleStorageChange = () => {
@@ -97,10 +97,9 @@ function App() {
         setIsAuthenticated(false);
       }
     };
-
     // Check initial state
     handleStorageChange();
-
+    
     // Listen for storage events
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
@@ -162,12 +161,24 @@ function App() {
 
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
+  // Receive search results from Header and apply in UI
+  const handleSearch = (resultsOrNull) => {
+    // When Header passes null (empty query), reset search
+    if (resultsOrNull === null) {
+      setSearchResults(null);
+      return;
+    }
+    // Otherwise expect an array of products
+    setSearchResults(Array.isArray(resultsOrNull) ? resultsOrNull : []);
+  };
+
   // Filter products based on category (using category ID from database)
   const getFilteredProducts = () => {
+    const source = searchResults !== null ? searchResults : products;
     if (activeCategory === "all") {
-      return products;
+      return source;
     }
-    return products.filter((product) => {
+    return source.filter((product) => {
       // Check if product has category object (from populated data) or category ID
       const productCategory = product.category?._id || product.category;
       return productCategory === activeCategory;
@@ -195,7 +206,7 @@ function App() {
           <Header
             cartItemCount={cartItemCount}
             toggleCart={() => setShowCart(true)}
-            onSearch={setSearchTerm}
+            onSearch={handleSearch}
             isWeb={isWeb}
             windowWidth={windowWidth}
             onSignInClick={() => setShowSignIn(true)}

@@ -1,18 +1,22 @@
 // components/Header.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import authService from "../api/authService";
 import { FaBars, FaTimes, FaSearch, FaUser, FaShoppingCart, FaChevronDown, FaMapMarker, FaGift, FaLeaf, FaMedkit, FaShieldAlt, FaHeart, FaFileAlt, FaSignOutAlt } from "react-icons/fa";
 import "./Header.css";
-
+import { BASE_URL, PRODUCT_SEARCH_API } from "../api/api";
 
 function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propWindowWidth, onSignInClick }){
-
+  //to search the product
   const [searchText, setSearchText] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const windowWidth = propWindowWidth || window.innerWidth;
   const isMobile = !isWeb || windowWidth < 768;
+
+  // Debounce and request cancellation refs
+  const debounceRef = useRef(null);
+  const requestControllerRef = useRef(null);
 
   //useEffect to get the user data from the local storage
   useEffect(() => {
@@ -24,7 +28,6 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
       setUser(null);
     }
   }, []);
-
 
   //useEffect to listen for storage changes
   useEffect(() => {
@@ -42,7 +45,6 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-
   //logout by utility function of authservices
   const handleLogout = () => {
     authService.logout();
@@ -52,12 +54,75 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
     window.location.reload();
   };
 
+  const performSearch = async (text, minPrice, maxPrice, category) => {
+    const trimmed = (text || "").trim();
 
-  const handleSearch = (text) => {
-    setSearchText(text);
-    onSearch(text);
+    // Reset only when ALL filters are empty
+    const noFilters =
+      trimmed === "" &&
+      (minPrice === undefined || minPrice === null || minPrice === "") &&
+      (maxPrice === undefined || maxPrice === null || maxPrice === "") &&
+      (category === undefined || category === null || category === "");
+
+    if (noFilters) {
+      setSearchText("");
+      onSearch(null);
+      return;
+    }
+
+    // Enforce min 2 characters when only text is used
+    const onlyText = trimmed !== "" &&
+      (minPrice === undefined || minPrice === null || minPrice === "") &&
+      (maxPrice === undefined || maxPrice === null || maxPrice === "") &&
+      (category === undefined || category === null || category === "");
+    if (onlyText && trimmed.length < 2) {
+      return; // wait for more input to avoid spamming server
+    }
+
+    // Cancel any in-flight request
+    if (requestControllerRef.current) {
+      requestControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+
+    const params = new URLSearchParams();
+    if (trimmed !== "") params.set("query", trimmed);
+    if (minPrice !== undefined && minPrice !== null && minPrice !== "")
+      params.set("minPrice", String(minPrice));
+    if (maxPrice !== undefined && maxPrice !== null && maxPrice !== "")
+      params.set("maxPrice", String(maxPrice));
+    if (category !== undefined && category !== null && category !== "")
+      params.set("category", String(category));
+
+    try {
+      const res = await fetch(`${BASE_URL}${PRODUCT_SEARCH_API}?${params.toString()}`, {
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error("Search request failed");
+      const data = await res.json();
+      onSearch(Array.isArray(data) ? data : []);
+    } catch (err) {
+      if (err.name === 'AbortError') return; // ignore aborted requests
+      console.error("Search error:", err);
+      onSearch([]);
+    }
   };
 
+  const handleInputChange = (e) => {
+    const text = e.target.value;
+    setSearchText(text);
+  };
+
+  // Debounced trigger to reduce 429 rate-limit issues
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      performSearch(searchText);
+    }, 400);
+    return () => clearTimeout(debounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchText]);
 
   return (
     <header className="header">
@@ -82,10 +147,10 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
             <input
               type="text"
               value={searchText}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Search women's products"
             />
-            <button className="search-btn">
+            <button className="search-btn" onClick={() => performSearch(searchText)}>
               <FaSearch />
             </button>
           </div>

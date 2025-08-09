@@ -291,3 +291,26 @@
     font-weight: 500;
   }
   
+  @media (max-width: 768px) { 
+  .logo {
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 10px;
+  }
+
+  .search-bar {
+    display: flex;
+    border-radius: 4px;
+    height: 20px;
+  }
+
+  .search-bar input {
+    font-size: 8px;
+  }
+
+  .menu-toggle {
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+}
