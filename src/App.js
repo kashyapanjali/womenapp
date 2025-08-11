@@ -13,23 +13,22 @@ import CategoryFilter from "./components/CategoryFilter";
 import Admin from "./components/admin/Admin";
 
 //category , product , cart and base url import
-import{CATEGORIES_API, BASE_URL, PRODUCTS_API, ADD_TO_CART_API, USER_CART_API, UPDATE_CART_ITEM_API, REMOVE_FROM_CART_API, CLEAR_CART_API} from "./api/api";
+import{CATEGORIES_API, BASE_URL, PRODUCTS_API, ADD_TO_CART_API, USER_CART_API} from "./api/api";
 
 function App() {
   const [showCart, setShowCart] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [cart, setCart] = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [isWeb, setIsWeb] = useState(true);
+  const [isWeb] = useState(true);
   
   // Add state for real products from API
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState("");
-  // Results returned from Header search (null means no active search)
+
+  // Results returned from Header search
   const [searchResults, setSearchResults] = useState(null);
   // Categories state for real categories from database
   const [categories, setCategories] = useState([]);
@@ -42,12 +41,12 @@ function App() {
     return null;
   });
   
+
   const isAdmin = user && user.role === "admin";
 
   // Helper: normalize various cart payload shapes to an array of items
   const normalizeCart = (data) => {
     if (!data) return [];
-    // common shapes: {items:[...]}, {cart:{items:[...]}}, {cartItems:[...]}, [...]
     if (Array.isArray(data)) return data;
     if (Array.isArray(data.items)) return data.items;
     if (data.cart && Array.isArray(data.cart.items)) return data.cart.items;
@@ -55,6 +54,7 @@ function App() {
     if (data.data && Array.isArray(data.data.items)) return data.data.items;
     return [];
   };
+
 
   // Fetch categories from API
   const fetchCategories = async () => {
@@ -102,8 +102,12 @@ function App() {
 
   const fetchCart = async () => {
     try {
-      if (!user?._id && !user?.id) return;
-      const userId = user._id || user.id;
+      // Read user directly from localStorage
+      const userData = localStorage.getItem('user');
+      const parsedUser = userData ? JSON.parse(userData) : null;
+      const userId = parsedUser?._id || parsedUser?.id;
+      if (!userId) return;
+
       const res = await fetch(`${BASE_URL}${USER_CART_API(userId)}`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch cart');
       const data = await res.json();
@@ -145,59 +149,7 @@ function App() {
     }
   };
 
-  const updateCartQuantity = async (productId, newQuantity) => {
-    try {
-      if (!user) return;
-
-      const res = await fetch(`${BASE_URL}${UPDATE_CART_ITEM_API(user._id || user.id)}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ productId, quantity: newQuantity })
-      });
-
-      if (!res.ok) throw new Error('Failed to update cart item');
-      const data = await res.json().catch(() => null);
-      const items = normalizeCart(data);
-      setCart(items.length ? items : await (async () => { await fetchCart(); return cart; })());
-    } catch (e) {
-      console.error('Update quantity error:', e);
-    }
-  };
-
-  const removeFromCart = async (productId) => {
-    try {
-      if (!user) return;
-
-      const res = await fetch(`${BASE_URL}${REMOVE_FROM_CART_API(user._id || user.id)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ productId })
-      });
-
-      if (!res.ok) throw new Error('Failed to remove item');
-      const data = await res.json().catch(() => null);
-      const items = normalizeCart(data);
-      setCart(items.length ? items : await (async () => { await fetchCart(); return cart; })());
-    } catch (e) {
-      console.error('Remove from cart error:', e);
-    }
-  };
-
-  const clearCart = async () => {
-    try {
-      if (!user) return;
-
-      const res = await fetch(`${BASE_URL}${CLEAR_CART_API(user._id || user.id)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-      if (!res.ok) throw new Error('Failed to clear cart');
-      await fetchCart();
-    } catch (e) {
-      console.error('Clear cart error:', e);
-    }
-  };
-
+  
   // Listen for authentication changes
   useEffect(() => {
     const handleStorageChange = () => {
@@ -205,20 +157,17 @@ function App() {
       if (userData) {
         const parsed = JSON.parse(userData);
         setUser(parsed);
-        setIsAuthenticated(true);
         // fetch cart for new user
         fetchCart();
       } else {
         setUser(null);
-        setIsAuthenticated(false);
         setCart([]);
       }
     };
 
     // Check initial state
     handleStorageChange();
-
-    // Listen for storage events
+    
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -281,7 +230,6 @@ function App() {
           onAuthenticated={() => {
             const newUser = JSON.parse(localStorage.getItem("user"));
             setUser(newUser);
-            setIsAuthenticated(true);
             setShowSignIn(false);
             fetchCart();
           }}
@@ -331,7 +279,6 @@ function App() {
                 categories={categories}
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}
-                searchTerm={searchTerm}
                 onAddToCart={addToCart}
                 isWeb={isWeb}
                 windowWidth={windowWidth}
@@ -346,9 +293,7 @@ function App() {
             <Cart
               cart={cart}
               closeCart={() => setShowCart(false)}
-              onQuantityChange={updateCartQuantity}
-              onRemoveItem={removeFromCart}
-              onClearCart={clearCart}
+              onAddToCart={fetchCart}
             />
           )}
         </>
