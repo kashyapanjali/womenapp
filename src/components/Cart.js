@@ -153,7 +153,11 @@ function Cart({ cart, closeCart, onAddToCart }){
     }
   };
 
-  const total = (localCart || []).reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+  // calculate cart price of total products
+  const total = (localCart || []).reduce(
+    (sum, item) => sum + Number(item.price || item.product?.price || 0) * Number(item.quantity || 0),
+    0
+  );
 
   return (
     <div className="cart-overlay">
