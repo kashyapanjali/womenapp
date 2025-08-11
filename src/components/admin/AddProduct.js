@@ -3,6 +3,7 @@ import axios from "axios";
 import { BASE_URL, PRODUCTS_API, CATEGORIES_API } from "../../api/api";
 import "./AddProduct.css";
 
+
 const AddProduct = () => {
   const [productData, setProductData] = useState({
     name: "",
@@ -62,6 +63,7 @@ const AddProduct = () => {
     }
   };
 
+
   // Handle new category submit
   const handleAddCategory = async (e) => {
     e.preventDefault();
@@ -85,6 +87,8 @@ const AddProduct = () => {
     }
   };
 
+
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setProductData({
@@ -92,6 +96,7 @@ const AddProduct = () => {
       [name]: type === "checkbox" ? checked : value,
     });
   };
+
 
   //add product by admin function
   const handleSubmit = async (e) => {
@@ -146,6 +151,7 @@ const AddProduct = () => {
     }
   };
 
+  
   return (
     <div className="add-product-container">
       <h2>Add New Product</h2>

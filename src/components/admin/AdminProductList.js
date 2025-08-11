@@ -3,6 +3,7 @@ import axios from "axios";
 import { BASE_URL, PRODUCTS_API } from "../../api/api";
 import "./AdminProductList.css";
 
+
 const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +53,7 @@ const ProductList = () => {
     }
   };
 
+
   //this function for the delete of product by admin
   const handleDeleteProduct = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -74,6 +76,7 @@ const ProductList = () => {
     }
   };
 
+
   // Handle edit product - open edit form
   const handleEditProduct = (product) => {
     setEditingProduct(product);
@@ -89,6 +92,7 @@ const ProductList = () => {
     });
     setEditMessage("");
   };
+
 
   // Handle edit form input changes
   const handleEditChange = (e) => {
@@ -338,7 +342,7 @@ const ProductList = () => {
             {products.length === 0 ? (
               <p>No products available</p>
             ) : (
-                                                           products.map((product, index) => {
+                  products.map((product, index) => {
                   // Function to truncate description to 60 characters
                   const truncateDescription = (description) => {
                     if (!description) return '';

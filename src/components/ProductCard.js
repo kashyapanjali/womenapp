@@ -2,7 +2,7 @@ import React from "react";
 import "./ProductCard.css";
 import { FaCartPlus } from "react-icons/fa";
 
-function ProductCard({ product, onAddToCart }){
+function ProductCard({ product, onAddToCart, onBuyNow }){
   // Function to truncate description to 60 characters
   const truncateDescription = (description) => {
     if (!description) return '';
@@ -29,14 +29,12 @@ function ProductCard({ product, onAddToCart }){
           <FaCartPlus /> 
           {product.countInStock > 0 ? 'Add to Cart' : 'Out of Stock'}
         </button>
-         
-         {/* without cart */}
-        <button className="buy-now-btn"
-        //  onClick={() => onBuyNow(product)}
-         >
+        <button 
+          className="buy-now-btn"
+          onClick={() => onBuyNow && onBuyNow(product)}
+        >
           Buy Now
         </button>
-
       </div>
     </div>
   );

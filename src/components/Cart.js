@@ -10,7 +10,9 @@ import {
 } from "react-icons/fa";
 import { BASE_URL, UPDATE_CART_ITEM_API, REMOVE_FROM_CART_API, CLEAR_CART_API } from "../api/api";
 
-function Cart({ cart, closeCart, onAddToCart }){
+
+// Cart component
+function Cart({ cart, closeCart, onAddToCart, onCheckout, onCheckoutSingle }){
   const [localCart, setLocalCart] = useState(cart || []);
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +37,6 @@ function Cart({ cart, closeCart, onAddToCart }){
   const getUserIdFromToken = () => {
     const token = localStorage.getItem('token');
     if (!token) return null;
-    
     try {
       // Decode JWT token (base64 decode the payload part)
       const payload = token.split('.')[1];
@@ -48,6 +49,7 @@ function Cart({ cart, closeCart, onAddToCart }){
       return user ? (user._id || user.id) : null;
     }
   };
+
 
   // Update cart item quantity
   const updateCartQuantity = async (productId, newQuantity) => {
@@ -87,6 +89,7 @@ function Cart({ cart, closeCart, onAddToCart }){
     }
   };
 
+
   // Remove item from cart
   const removeFromCart = async (productId) => {
     try {
@@ -123,6 +126,7 @@ function Cart({ cart, closeCart, onAddToCart }){
     }
   };
 
+
   // Clear cart
   const clearCart = async () => {
     try {
@@ -153,6 +157,20 @@ function Cart({ cart, closeCart, onAddToCart }){
     }
   };
 
+
+  const handleCheckoutSingle = (item) => {
+    if (!onCheckoutSingle) return;
+    const product = {
+      _id: item.productId || item.product?._id || item._id,
+      id: item.productId || item.product?._id || item._id,
+      name: item.name || item.product?.name,
+      image: item.image || item.product?.image,
+      price: Number(item.price || item.product?.price || 0),
+    };
+    onCheckoutSingle(product);
+  };
+
+  
   //total amount of product
   const total = (localCart || []).reduce(
     (sum, item) => sum + Number(item.price || item.product?.price || 0) * Number(item.quantity || 0),
@@ -185,9 +203,17 @@ function Cart({ cart, closeCart, onAddToCart }){
                   <img
                     src={item.image || item.product?.image || "https://placehold.co/100x100"}
                     alt={item.name || item.product?.name || "Product"}
+                    style={{ cursor: onCheckoutSingle ? 'pointer' : 'default' }}
+                    onClick={() => handleCheckoutSingle(item)}
                   />
                   <div className="cart-info">
-                    <p className="cart-name">{item.name || item.product?.name}</p>
+                    <p 
+                      className="cart-name"
+                      style={{ cursor: onCheckoutSingle ? 'pointer' : 'default' }}
+                      onClick={() => handleCheckoutSingle(item)}
+                    >
+                      {item.name || item.product?.name}
+                    </p>
                     <p className="cart-price">₹{Number(item.price || item.product?.price || 0).toFixed(2)}</p>
                     <div className="quantity-controls">
                       <button
@@ -231,7 +257,7 @@ function Cart({ cart, closeCart, onAddToCart }){
                 <span>₹{total.toFixed(2)}</span>
               </div>
               <p className="tax-note">Taxes and shipping calculated at checkout</p>
-              <button className="btn btn-primary">
+              <button className="btn btn-primary" onClick={() => onCheckout && onCheckout()}>
                 Proceed to Checkout <FaArrowRight />
               </button>
               <button 

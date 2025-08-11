@@ -14,6 +14,7 @@ import Admin from "./components/admin/Admin";
 
 //category , product , cart and base url import
 import{CATEGORIES_API, BASE_URL, PRODUCTS_API, ADD_TO_CART_API, USER_CART_API} from "./api/api";
+import Checkout from "./components/Checkout";
 
 function App() {
   const [showCart, setShowCart] = useState(false);
@@ -41,6 +42,9 @@ function App() {
     return null;
   });
   
+  // Simple checkout state
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutProduct, setCheckoutProduct] = useState(null);
 
   const isAdmin = user && user.role === "admin";
 
@@ -149,6 +153,26 @@ function App() {
     }
   };
 
+  // Buy Now handler
+  const handleBuyNow = (product) => {
+    if (!user) {
+      setShowSignIn(true);
+      return;
+    }
+    setCheckoutProduct(product || null);
+    setShowCheckout(true);
+  };
+
+  // Proceed to checkout from cart
+  const handleCartCheckout = () => {
+    if (!user) {
+      setShowSignIn(true);
+      return;
+    }
+    setCheckoutProduct(null); // whole cart
+    setShowCart(false);
+    setShowCheckout(true);
+  };
   
   // Listen for authentication changes
   useEffect(() => {
@@ -222,6 +246,12 @@ function App() {
 
   const filteredProducts = getFilteredProducts();
 
+  // Close checkout view
+  const closeCheckout = () => {
+    setShowCheckout(false);
+    setCheckoutProduct(null);
+  };
+
   return (
     <div className="app-container">
       {showSignIn ? (
@@ -236,6 +266,29 @@ function App() {
         />
       ) : isAdmin ? (
         <Admin />
+      ) : showCheckout ? (
+        <>
+          <Header
+            cartItemCount={cartItemCount}
+            toggleCart={() => setShowCart(true)}
+            onSearch={handleSearch}
+            isWeb={isWeb}
+            windowWidth={windowWidth}
+            onSignInClick={() => setShowSignIn(true)}
+          />
+          <div className="main-content">
+            <Checkout 
+              product={checkoutProduct}
+              cartItems={cart}
+              onClose={closeCheckout}
+              onOrderPlaced={() => {
+                // simple confirmation, then go back
+                closeCheckout();
+              }}
+            />
+          </div>
+          <Footer isWeb={isWeb} />
+        </>
       ) : (
         <>
           <Header
@@ -253,6 +306,7 @@ function App() {
               activeCategory={activeCategory}
               setActiveCategory={setActiveCategory}
               isWeb={isWeb}
+              windowWidth={windowWidth}
             />
 
             {productsLoading ? (
@@ -282,6 +336,7 @@ function App() {
                 onAddToCart={addToCart}
                 isWeb={isWeb}
                 windowWidth={windowWidth}
+                onBuyNow={handleBuyNow}
               />
             )}
           </div>
@@ -294,6 +349,7 @@ function App() {
               cart={cart}
               closeCart={() => setShowCart(false)}
               onAddToCart={fetchCart}
+              onCheckout={handleCartCheckout}
             />
           )}
         </>
