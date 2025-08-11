@@ -11,7 +11,7 @@ function ProductCard({ product, onAddToCart }){
   };
 
   return (
-    <div className="product-card">
+    <div className="product-ca">
       <img
         src={product.image || "https://placehold.co/300x300"}
         alt={product.name}
@@ -29,6 +29,14 @@ function ProductCard({ product, onAddToCart }){
           <FaCartPlus /> 
           {product.countInStock > 0 ? 'Add to Cart' : 'Out of Stock'}
         </button>
+         
+         {/* without cart */}
+        <button className="buy-now-btn"
+        //  onClick={() => onBuyNow(product)}
+         >
+          Buy Now
+        </button>
+
       </div>
     </div>
   );

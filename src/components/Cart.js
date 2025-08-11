@@ -153,6 +153,7 @@ function Cart({ cart, closeCart, onAddToCart }){
     }
   };
 
+  //total amount of product
   const total = (localCart || []).reduce(
     (sum, item) => sum + Number(item.price || item.product?.price || 0) * Number(item.quantity || 0),
     0
