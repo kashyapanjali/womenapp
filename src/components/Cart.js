@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "./Cart.css";
 import {
   FaTimes,
@@ -9,40 +9,8 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 
-function Cart({closeCart}){
-  const [cart, setCart] = useState([
-    {
-      id: 1,
-      name: "Menstrual Kit",
-      price: 299,
-      quantity: 2,
-      image: "https://5.imimg.com/data5/ANDROID/Default/2024/7/433837471/RJ/MV/HT/38818420/product-jpeg-500x500.jpg",
-    },
-    {
-      id: 2,
-      name: "Safety Product",
-      price: 499,
-      quantity: 1,
-      image: "https://rukminim3.flixcart.com/image/850/1000/k7nnrm80/sanitary-pad-pantyliner/q/e/p/sanitary-pads-30pcs-pack-of-1-regular-1-sanitary-pad-women-original-imafpugaekkn3arq.jpeg?q=90&crop=false",
-    },
-  ]);
-
-  const handleQuantityChange = (productId, newQuantity) => {
-    const updatedCart = cart.map((item) =>
-      item.id === productId ? { ...item, quantity: newQuantity } : item
-    );
-    setCart(updatedCart);
-  };
-
-  const handleRemoveFromCart = (productId) => {
-    setCart(cart.filter((item) => item.id !== productId));
-  };
-
-  const handleClearCart = () => {
-    setCart([]);
-  };
-
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+function Cart({ cart, closeCart, onQuantityChange, onRemoveItem, onClearCart }){
+  const total = (cart || []).reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
 
   return (
     <div className="cart-overlay">
@@ -54,7 +22,7 @@ function Cart({closeCart}){
           </button>
         </div>
 
-        {cart.length === 0 ? (
+        {!cart || cart.length === 0 ? (
           <div className="empty-cart">
             <FaShoppingCart size={40} />
             <p>Your cart is empty</p>
@@ -66,18 +34,18 @@ function Cart({closeCart}){
           <>
             <div className="cart-items">
               {cart.map((item) => (
-                <div className="cart-item" key={item.id}>
+                <div className="cart-item" key={item.productId || item._id}>
                   <img
-                    src={item.image || "https://placehold.co/100x100"}
-                    alt={item.name}
+                    src={item.image || item.product?.image || "https://placehold.co/100x100"}
+                    alt={item.name || item.product?.name || "Product"}
                   />
                   <div className="cart-info">
-                    <p className="cart-name">{item.name}</p>
-                    <p className="cart-price">₹{item.price.toFixed(2)}</p>
+                    <p className="cart-name">{item.name || item.product?.name}</p>
+                    <p className="cart-price">₹{Number(item.price || item.product?.price || 0).toFixed(2)}</p>
                     <div className="quantity-controls">
                       <button
                         onClick={() =>
-                          handleQuantityChange(item.id, Math.max(1, item.quantity - 1))
+                          onQuantityChange && onQuantityChange(item.productId || item.product?._id || item._id, Math.max(1, (item.quantity || 1) - 1))
                         }
                       >
                         <FaMinus />
@@ -85,7 +53,7 @@ function Cart({closeCart}){
                       <span>{item.quantity}</span>
                       <button
                         onClick={() =>
-                          handleQuantityChange(item.id, item.quantity + 1)
+                          onQuantityChange && onQuantityChange(item.productId || item.product?._id || item._id, (item.quantity || 1) + 1)
                         }
                       >
                         <FaPlus />
@@ -93,11 +61,11 @@ function Cart({closeCart}){
                     </div>
                   </div>
                   <p className="cart-total">
-                    ₹{(item.price * item.quantity).toFixed(2)}
+                    ₹{(Number(item.price || item.product?.price || 0) * Number(item.quantity || 0)).toFixed(2)}
                   </p>
                   <button
                     className="cart-remove"
-                    onClick={() => handleRemoveFromCart(item.id)}
+                    onClick={() => onRemoveItem && onRemoveItem(item.productId || item.product?._id || item._id)}
                   >
                     <FaTrash />
                   </button>
@@ -114,7 +82,7 @@ function Cart({closeCart}){
               <button className="btn btn-primary">
                 Proceed to Checkout <FaArrowRight />
               </button>
-              <button className="btn btn-danger" onClick={handleClearCart}>
+              <button className="btn btn-danger" onClick={() => onClearCart && onClearCart()}>
                 Clear Cart
               </button>
               <button className="btn btn-secondary" onClick={closeCart}>
