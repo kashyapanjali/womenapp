@@ -133,7 +133,7 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
               {menuOpen ? <FaTimes /> : <FaBars />}
             </button>
           )}
-          <h1 className="logo">NearToWomen</h1>
+          <h1 className="logo" onClick={() => window.location.href = '/'}>NearToWomen</h1>
         </div>
 
         <div className="header-center">
