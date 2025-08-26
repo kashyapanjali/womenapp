@@ -50,7 +50,7 @@ function App() {
 
   const isAdmin = user && user.role === "admin";
 
-  // Helper: normalize various cart payload shapes to an array of items
+  // normalize various cart payload shapes to an array of items
   const normalizeCart = (data) => {
     if (!data) return [];
     if (Array.isArray(data)) return data;
@@ -73,6 +73,12 @@ function App() {
       setCategories(data);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      // Set default categories if backend is not available
+      setCategories([
+        { _id: '1', name: 'Menstrual Care' },
+        { _id: '2', name: 'Health Supplements' },
+        { _id: '3', name: 'Safety Products' }
+      ]);
     }
   };
 
@@ -94,7 +100,28 @@ function App() {
       setProducts(data);
     } catch (error) {
       console.error('Error fetching products:', error);
-      setProductsError('Failed to load products');
+      setProductsError('Backend server not available. Please start your backend server on port 5000.');
+      // Set some sample products for testing
+      setProducts([
+        {
+          _id: '1',
+          name: 'Premium Sanitary Pads',
+          description: 'Comfortable and reliable protection',
+          price: 299,
+          image: 'https://5.imimg.com/data5/ANDROID/Default/2024/7/433837471/RJ/MV/HT/38818420/product-jpeg-500x500.jpg',
+          category: { _id: '1', name: 'Menstrual Care' },
+          countInStock: 50
+        },
+        {
+          _id: '2',
+          name: 'Women\'s Health Vitamins',
+          description: 'Essential vitamins for women\'s health',
+          price: 599,
+          image: 'https://cdn.anscommerce.com/live/image/catalog/brandstore/nutrela/Womenpk.JPG',
+          category: { _id: '2', name: 'Health Supplements' },
+          countInStock: 30
+        }
+      ]);
     } finally {
       setProductsLoading(false);
     }
@@ -112,18 +139,34 @@ function App() {
     try {
       // Read user directly from localStorage
       const userData = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
       const parsedUser = userData ? JSON.parse(userData) : null;
       const userId = parsedUser?._id || parsedUser?.id;
-      if (!userId) return;
+      
+      // Only fetch cart if user is logged in and has valid token
+      if (!userId || !token) {
+        console.log('User not logged in, skipping cart fetch');
+        return;
+      }
 
       const res = await fetch(`${BASE_URL}${USER_CART_API(userId)}`, { headers: getAuthHeaders() });
-      if (!res.ok) throw new Error('Failed to fetch cart');
+      if (!res.ok) {
+        if (res.status === 401) {
+          console.log('User not authorized, clearing auth data');
+          // Clear invalid auth data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+          setCart([]);
+          return;
+        }
+        throw new Error('Failed to fetch cart');
+      }
       const data = await res.json();
       const items = normalizeCart(data);
       setCart(items);
     } catch (e) {
       console.error('Fetch cart error:', e);
-      setCart([]);
     }
   };
 
@@ -134,7 +177,6 @@ function App() {
         return;
       }
       
-      //in the request body only send productId and quantity
       const body = JSON.stringify({productId: product._id || product.id, quantity: 1 });
 
       const res = await fetch(`${BASE_URL}${ADD_TO_CART_API}`, {
@@ -183,7 +225,9 @@ function App() {
   useEffect(() => {
     const handleStorageChange = () => {
       const userData = localStorage.getItem("user");
-      if (userData) {
+      const token = localStorage.getItem("token");
+      
+      if (userData && token) {
         const parsed = JSON.parse(userData);
         setUser(parsed);
         // fetch cart for new user
@@ -236,6 +280,17 @@ function App() {
   };
 
   const cartItemCount = cart.reduce((total, item) => total + Number(item.quantity || 0), 0);
+
+  // Debug: Log authentication status
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    console.log('Auth Status:', { 
+      hasUser: !!userData, 
+      hasToken: !!token,
+      user: userData ? JSON.parse(userData) : null 
+    });
+  }, [user]);
 
   // Filter products based on category (using category ID from database)
   const getFilteredProducts = () => {

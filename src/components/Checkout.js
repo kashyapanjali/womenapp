@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import "./Checkout.css";
 import { BASE_URL, PURCHASE_FROM_CART_API, DIRECT_PURCHASE_API } from "../api/api.js";
-import { UPI_PROCESS_PAYMENT_API ,UPI_GATEWAY_CREATE_API, UPI_GATEWAY_VERIFY_API} from "../api/api.js";
+// import paymentService from "../api/paymentService.js";
+import paymentService from "../api/testPaymentService.js"; // Using test service for now
 
 function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
   const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -13,6 +14,8 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
   const [phone, setPhone] = useState("");
   const [instructions, setInstructions] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
   const isSingleProduct = Boolean(product);
 
@@ -43,55 +46,89 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
     }
   };
 
+  // Validate form inputs
+  const validateForm = () => {
+    const errors = {};
 
-  //intiate payment method
-  const initiatePayment = async (orderId) => {
-    const res = await fetch(`${BASE_URL}${UPI_GATEWAY_CREATE_API(orderId)}`, { method: 'POST' });
-    const data = await res.json();
-  
-    const options = {
-      key: data.keyId,
-      amount: data.amount,
-      currency: data.currency,
-      name: 'Your App Name',
-      description: 'Purchase Description',
-      order_id: data.gatewayOrderId,
-      handler: async function (response) {
-        // Send payment details to backend for verification
-        const verifyRes = await fetch(`${BASE_URL}${UPI_GATEWAY_VERIFY_API}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature
-          })
-        });
-        const result = await verifyRes.json();
-        alert(result.message);
-      },
-      prefill: {
-        name: 'Customer Name',
-        email: 'customer@example.com',
-        contact: '9999999999'
-      },
-      theme: { color: '#3399cc' }
-    };
-  
-    const rzp1 = new window.Razorpay(options);
-    rzp1.open();
+    if (!street.trim()) errors.street = 'Street address is required';
+    if (!city.trim()) errors.city = 'City is required';
+    if (!zip.trim()) errors.zip = 'ZIP/PIN is required';
+    if (!phone.trim()) errors.phone = 'Phone number is required';
+
+    if (paymentMethod === "upi") {
+      const upiValidation = paymentService.validateUPIId(upiId);
+      if (!upiValidation.isValid) {
+        errors.upiId = upiValidation.message;
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
-  
+
+  // Complete Razorpay payment initiation
+  const initiateRazorpayPayment = async (orderId) => {
+    try {
+      setPaymentProcessing(true);
+      
+      // Create Razorpay order
+      const orderData = await paymentService.createRazorpayOrder(orderId);
+      
+      // Get user details for prefill
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      // Prepare UPI data
+      const upiData = paymentMethod === 'upi' ? { upiApp, upiId } : {};
+      
+      // Initialize Razorpay payment
+      const result = await paymentService.initializeRazorpayPayment(
+        { ...orderData, orderId },
+        { ...user, phone },
+        upiData
+      );
+      
+      alert('Payment successful! ' + result.message);
+      
+      // Close checkout and trigger order placed callback
+      onOrderPlaced && onOrderPlaced();
+      onClose && onClose();
+      
+    } catch (error) {
+      console.error('Payment initiation error:', error);
+      alert('Payment failed: ' + error.message);
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  // Process UPI payment directly (without Razorpay)
+  const processUPIPayment = async (orderId) => {
+    try {
+      setPaymentProcessing(true);
+      
+      const result = await paymentService.processUPIPayment(orderId, { upiId, upiApp });
+      alert('UPI payment successful! Transaction ID: ' + result.payment.transactionId);
+      
+      // Close checkout and trigger order placed callback
+      onOrderPlaced && onOrderPlaced();
+      onClose && onClose();
+      
+    } catch (error) {
+      console.error('UPI payment error:', error);
+      alert('UPI payment failed: ' + error.message);
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
 
   const placeOrder = async (e) => {
     e.preventDefault();
-    if (!street.trim() || !city.trim() || !zip.trim() || !phone.trim()) {
-      alert("Please fill street, city, zip and phone.");
-      return;
-    }
-    if (paymentMethod === "upi" && !upiId.trim()) {
-      alert("Please enter your UPI ID.");
+    
+    // Clear previous validation errors
+    setValidationErrors({});
+    
+    // Validate form
+    if (!validateForm()) {
       return;
     }
 
@@ -152,23 +189,19 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
         throw new Error('Order created but no order ID was returned');
       }
 
-      // If UPI, process payment immediately
+      // Handle payment based on method
       if (paymentMethod === 'upi') {
-        const payRes = await fetch(`${BASE_URL}${UPI_PROCESS_PAYMENT_API(createdOrderId)}`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ upiId, upiApp })
-        });
-        if (!payRes.ok) {
-          const err = await payRes.json().catch(() => ({}));
-          throw new Error(err.message || 'UPI payment failed');
-        }
+        // Use Razorpay for UPI payments
+        await initiateRazorpayPayment(createdOrderId);
+      } else {
+        // Cash on Delivery - order is already created
+        alert('Order placed successfully! You will pay on delivery.');
+        onOrderPlaced && onOrderPlaced();
+        onClose && onClose();
       }
-
-      alert('Order placed successfully!');
-      onOrderPlaced && onOrderPlaced();
-      onClose && onClose();
+      
     } catch (err) {
+      console.error('Order placement error:', err);
       alert(err.message || 'Failed to place order');
     } finally {
       setSubmitting(false);
@@ -214,7 +247,10 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
             onChange={(e) => setStreet(e.target.value)}
             placeholder="Street address"
             required
+            className={validationErrors.street ? 'error' : ''}
           />
+          {validationErrors.street && <span className="error-text">{validationErrors.street}</span>}
+          
           <div style={{ display: 'flex', gap: 12 }}>
             <input
               type="text"
@@ -223,6 +259,7 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
               placeholder="City"
               required
               style={{ flex: 1 }}
+              className={validationErrors.city ? 'error' : ''}
             />
             <input
               type="text"
@@ -231,15 +268,25 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
               placeholder="ZIP / PIN"
               required
               style={{ flex: 1 }}
+              className={validationErrors.zip ? 'error' : ''}
             />
           </div>
+          {(validationErrors.city || validationErrors.zip) && (
+            <div style={{ display: 'flex', gap: 12 }}>
+              {validationErrors.city && <span className="error-text" style={{ flex: 1 }}>{validationErrors.city}</span>}
+              {validationErrors.zip && <span className="error-text" style={{ flex: 1 }}>{validationErrors.zip}</span>}
+            </div>
+          )}
+          
           <input
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Phone"
             required
+            className={validationErrors.phone ? 'error' : ''}
           />
+          {validationErrors.phone && <span className="error-text">{validationErrors.phone}</span>}
         </div>
 
         <div className="card-block">
@@ -313,11 +360,12 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
               </div>
               <input
                 type="text"
-                className="upi-id"
+                className={`upi-id ${validationErrors.upiId ? 'error' : ''}`}
                 placeholder="Enter your UPI ID (e.g., name@bank)"
                 value={upiId}
                 onChange={(e) => setUpiId(e.target.value)}
               />
+              {validationErrors.upiId && <span className="error-text">{validationErrors.upiId}</span>}
             </div>
           )}
         </div>
@@ -327,8 +375,12 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
             Total: ₹{cartTotals.subtotal.toFixed(2)}
           </div>
           <button type="button" className="secondary-btn" onClick={onClose}>Back</button>
-          <button type="submit" className="primary-btn" disabled={submitting}>
-            {submitting ? 'Placing...' : 'Place Order'}
+          <button 
+            type="submit" 
+            className="primary-btn" 
+            disabled={submitting || paymentProcessing}
+          >
+            {submitting ? 'Placing...' : paymentProcessing ? 'Processing Payment...' : 'Place Order'}
           </button>
         </div>
       </form>
