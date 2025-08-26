@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import AddProduct from "./AddProduct";
 import ProductList from "./AdminProductList";
+import Order from "./Order";
+import UsersDetail from "./UsersDetail";
 import "./Admin.css";
 
 const Admin = () => {
@@ -25,23 +27,41 @@ const Admin = () => {
       </div>
       
       <div className="admin-nav">
+
+        {/* add product by admin */}
         <button
           className={activeSection === "add" ? "active" : ""}
           onClick={() => setActiveSection("add")}
         >
           Add Product
         </button>
+
+        {/* Product list in stock */}
         <button
           className={activeSection === "list" ? "active" : ""}
           onClick={() => setActiveSection("list")}
         >
           Product List
         </button>
+
+        {/* Order list of customers */}
+        <button className={activeSection === "orderlist"?"active":""}
+        onClick={()=>setActiveSection("orderlist")}>
+          OrderList
+        </button>
+
+        {/* to show the users or customer details*/}
+        <button className={activeSection === "userdetail"?"active":""}
+        onClick={()=>setActiveSection("userdetail")}>
+          Customers
+        </button>
       </div>
 
       <div className="admin-content">
         {activeSection === "add" && <AddProduct />}
         {activeSection === "list" && <ProductList />}
+        {activeSection === "orderlist"&&<Order/>}
+        {activeSection === "userdetail"&&<UsersDetail/>}
       </div>
     </div>
   );

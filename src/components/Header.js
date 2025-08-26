@@ -5,7 +5,7 @@ import { FaBars, FaTimes, FaSearch, FaUser, FaShoppingCart, FaChevronDown, FaMap
 import "./Header.css";
 import { BASE_URL, PRODUCT_SEARCH_API } from "../api/api";
 
-function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propWindowWidth, onSignInClick }){
+function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propWindowWidth, onSignInClick, onOrdersClick }){
   //to search the product
   const [searchText, setSearchText] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -167,7 +167,7 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
               {showUserMenu && (
                 <div className="user-dropdown">
                   <button><FaUser /> Profile</button>
-                  <button><FaFileAlt /> Orders</button>
+                  <button onClick={onOrdersClick}><FaFileAlt /> Orders</button>
                   <button><FaHeart /> Wishlist</button>
                   <hr />
                   <button className="logout" onClick={handleLogout}><FaSignOutAlt /> Logout</button>
@@ -183,7 +183,7 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
             )
           )}
             {!isMobile && (
-            <div className="returns-orders">
+            <div className="returns-orders" onClick={onOrdersClick} style={{ cursor: 'pointer' }}>
                 <span className="user-greet">Returns</span>
                 <span className="user-account">& Orders</span>
             </div>
@@ -202,7 +202,7 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
           {user ? (
             <>
               <button><FaUser /> My Account</button>
-              <button><FaFileAlt /> Orders</button>
+              <button onClick={onOrdersClick}><FaFileAlt /> Orders</button>
               <button><FaHeart /> Wishlist</button>
               <hr />
               <button className="logout" onClick={handleLogout}><FaSignOutAlt /> Logout</button>

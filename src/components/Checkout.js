@@ -1,12 +1,18 @@
 import React, { useState, useMemo } from "react";
 import "./Checkout.css";
+import { BASE_URL, PURCHASE_FROM_CART_API, DIRECT_PURCHASE_API } from "../api/api.js";
+import { UPI_PROCESS_PAYMENT_API ,UPI_GATEWAY_CREATE_API, UPI_GATEWAY_VERIFY_API} from "../api/api.js";
 
 function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [upiApp, setUpiApp] = useState("gpay");
   const [upiId, setUpiId] = useState("");
-  const [address, setAddress] = useState("");
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [zip, setZip] = useState("");
+  const [phone, setPhone] = useState("");
   const [instructions, setInstructions] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const isSingleProduct = Boolean(product);
 
@@ -23,18 +29,150 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
     return { subtotal, itemsCount };
   }, [isSingleProduct, product, cartItems]);
 
-  const placeOrder = (e) => {
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+  };
+
+  const getUserId = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      return user?._id || user?.id;
+    } catch (e) {
+      return null;
+    }
+  };
+
+
+  //intiate payment method
+  const initiatePayment = async (orderId) => {
+    const res = await fetch(`${BASE_URL}${UPI_GATEWAY_CREATE_API(orderId)}`, { method: 'POST' });
+    const data = await res.json();
+  
+    const options = {
+      key: data.keyId,
+      amount: data.amount,
+      currency: data.currency,
+      name: 'Your App Name',
+      description: 'Purchase Description',
+      order_id: data.gatewayOrderId,
+      handler: async function (response) {
+        // Send payment details to backend for verification
+        const verifyRes = await fetch(`${BASE_URL}${UPI_GATEWAY_VERIFY_API}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          })
+        });
+        const result = await verifyRes.json();
+        alert(result.message);
+      },
+      prefill: {
+        name: 'Customer Name',
+        email: 'customer@example.com',
+        contact: '9999999999'
+      },
+      theme: { color: '#3399cc' }
+    };
+  
+    const rzp1 = new window.Razorpay(options);
+    rzp1.open();
+  };
+  
+
+  const placeOrder = async (e) => {
     e.preventDefault();
-    if (!address.trim()) {
-      alert("Please enter your delivery address.");
+    if (!street.trim() || !city.trim() || !zip.trim() || !phone.trim()) {
+      alert("Please fill street, city, zip and phone.");
       return;
     }
     if (paymentMethod === "upi" && !upiId.trim()) {
       alert("Please enter your UPI ID.");
       return;
     }
-    alert("Order placed successfully!");
-    onOrderPlaced && onOrderPlaced();
+
+    const userId = getUserId();
+    if (!userId) {
+      alert('Please sign in to place an order.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const commonAddress = {
+        shippingAddress: { street, city, zip },
+        city,
+        zip,
+        phone
+      };
+
+      let createdOrderId = null;
+
+      if (isSingleProduct) {
+        // Direct purchase
+        const body = JSON.stringify({
+          productId: product._id || product.id,
+          quantity: 1,
+          ...commonAddress
+        });
+        const res = await fetch(`${BASE_URL}${DIRECT_PURCHASE_API(userId)}`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || 'Failed to create order');
+        }
+        const data = await res.json();
+        createdOrderId = data?.order?.id || data?.order?._id || data?.orderId || data?.id;
+      } else {
+        // From cart
+        const body = JSON.stringify({ ...commonAddress });
+        const res = await fetch(`${BASE_URL}${PURCHASE_FROM_CART_API(userId)}`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || 'Failed to create order from cart');
+        }
+        const data = await res.json();
+        const order = data?.order || data;
+        createdOrderId = order?.id || order?._id;
+      }
+
+      if (!createdOrderId) {
+        throw new Error('Order created but no order ID was returned');
+      }
+
+      // If UPI, process payment immediately
+      if (paymentMethod === 'upi') {
+        const payRes = await fetch(`${BASE_URL}${UPI_PROCESS_PAYMENT_API(createdOrderId)}`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ upiId, upiApp })
+        });
+        if (!payRes.ok) {
+          const err = await payRes.json().catch(() => ({}));
+          throw new Error(err.message || 'UPI payment failed');
+        }
+      }
+
+      alert('Order placed successfully!');
+      onOrderPlaced && onOrderPlaced();
+      onClose && onClose();
+    } catch (err) {
+      alert(err.message || 'Failed to place order');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const goToProducts = () => {
@@ -70,11 +208,36 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
       <form className="checkout-form" onSubmit={placeOrder}>
         <div className="card-block">
           <h4>Delivery Address</h4>
-          <textarea
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Enter your full delivery address"
-            rows={4}
+          <input
+            type="text"
+            value={street}
+            onChange={(e) => setStreet(e.target.value)}
+            placeholder="Street address"
+            required
+          />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="City"
+              required
+              style={{ flex: 1 }}
+            />
+            <input
+              type="text"
+              value={zip}
+              onChange={(e) => setZip(e.target.value)}
+              placeholder="ZIP / PIN"
+              required
+              style={{ flex: 1 }}
+            />
+          </div>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Phone"
             required
           />
         </div>
@@ -164,7 +327,9 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
             Total: ₹{cartTotals.subtotal.toFixed(2)}
           </div>
           <button type="button" className="secondary-btn" onClick={onClose}>Back</button>
-          <button type="submit" className="primary-btn">Place Order</button>
+          <button type="submit" className="primary-btn" disabled={submitting}>
+            {submitting ? 'Placing...' : 'Place Order'}
+          </button>
         </div>
       </form>
     </div>

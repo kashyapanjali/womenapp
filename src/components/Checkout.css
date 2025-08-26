@@ -1,11 +1,12 @@
 .checkout-container {
   max-width: 800px;
-  margin: 30px auto;
+  margin: 50px auto;
   padding: 20px;
   background: linear-gradient(145deg, #fff0f5, #ffe6f0);
   border: 2px solid #e684a3;
   border-radius: 15px;
   box-shadow: 0 4px 15px rgba(168, 51, 110, 0.1);
+  margin-top: 180px;
 }
 
 .checkout-header {
@@ -149,10 +150,10 @@
 }
 
 @media (max-width: 768px) {
-  .checkout-container {
+  /* .checkout-container {
     margin: 20px 10px;
     padding: 15px;
-  }
+  } */
   .product-summary img {
     width: 80px;
     height: 80px;

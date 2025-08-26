@@ -306,13 +306,29 @@
   }
 
   .search-bar {
+    width: 120px;
     display: flex;
     border-radius: 4px;
     height: 20px;
   }
 
   .search-bar input {
-    font-size: 8px;
+    font-size: 6px;
+  }
+
+  .search-btn {
+    width: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .header-right {
+    gap:2px
+  }
+  .user-button .user-greet {
+    font-size: 5px;
   }
 
   .menu-toggle {

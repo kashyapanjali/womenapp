@@ -15,6 +15,7 @@ import Admin from "./components/admin/Admin";
 //category , product , cart and base url import
 import{CATEGORIES_API, BASE_URL, PRODUCTS_API, ADD_TO_CART_API, USER_CART_API} from "./api/api";
 import Checkout from "./components/Checkout";
+import Orders from "./components/Orders";
 
 function App() {
   const [showCart, setShowCart] = useState(false);
@@ -45,6 +46,7 @@ function App() {
   // Simple checkout state
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutProduct, setCheckoutProduct] = useState(null);
+  const [showOrders, setShowOrders] = useState(false);
 
   const isAdmin = user && user.role === "admin";
 
@@ -98,11 +100,13 @@ function App() {
     }
   };
 
+
   // Cart API helpers (for profile users)
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
   };
+
 
   const fetchCart = async () => {
     try {
@@ -153,6 +157,7 @@ function App() {
     }
   };
 
+  
   // Buy Now handler
   const handleBuyNow = (product) => {
     if (!user) {
@@ -275,6 +280,7 @@ function App() {
             isWeb={isWeb}
             windowWidth={windowWidth}
             onSignInClick={() => setShowSignIn(true)}
+            onOrdersClick={() => setShowOrders(true)}
           />
           <div className="main-content">
             <Checkout 
@@ -282,12 +288,36 @@ function App() {
               cartItems={cart}
               onClose={closeCheckout}
               onOrderPlaced={() => {
-                // simple confirmation, then go back
                 closeCheckout();
+                setShowOrders(true);
               }}
             />
           </div>
           <Footer isWeb={isWeb} />
+        </>
+      ) : showOrders ? (
+        <>
+          <Header
+            cartItemCount={cartItemCount}
+            toggleCart={() => setShowCart(true)}
+            onSearch={handleSearch}
+            isWeb={isWeb}
+            windowWidth={windowWidth}
+            onSignInClick={() => setShowSignIn(true)}
+            onOrdersClick={() => setShowOrders(true)}
+          />
+          <div className="main-content">
+            <Orders onBack={() => setShowOrders(false)} />
+          </div>
+          <Footer isWeb={isWeb} />
+          {showCart && (
+            <Cart
+              cart={cart}
+              closeCart={() => setShowCart(false)}
+              onAddToCart={fetchCart}
+              onCheckout={handleCartCheckout}
+            />
+          )}
         </>
       ) : (
         <>
@@ -298,6 +328,7 @@ function App() {
             isWeb={isWeb}
             windowWidth={windowWidth}
             onSignInClick={() => setShowSignIn(true)}
+            onOrdersClick={() => setShowOrders(true)}
           />
           <div className="main-content">
             <Banner isWeb={isWeb} />
