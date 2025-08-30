@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from "react";
 import "./Checkout.css";
-import { BASE_URL, PURCHASE_FROM_CART_API, DIRECT_PURCHASE_API } from "../api/api.js";
-// import paymentService from "../api/paymentService.js";
-import paymentService from "../api/testPaymentService.js"; // Using test service for now
+import { BASE_URL, PURCHASE_FROM_CART_API, DIRECT_PURCHASE_API, UPI_GATEWAY_CREATE_API, UPI_GATEWAY_VERIFY_API } from "../api/api.js";
 
 function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
   const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -46,6 +44,21 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
     }
   };
 
+  // UPI ID validation
+  const validateUPIId = (upiId) => {
+    if (!upiId.trim()) {
+      return { isValid: false, message: 'UPI ID is required' };
+    }
+    
+    // Basic UPI ID format validation
+    const upiPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z]{3,}$/;
+    if (!upiPattern.test(upiId)) {
+      return { isValid: false, message: 'Invalid UPI ID format (e.g., name@bank)' };
+    }
+    
+    return { isValid: true, message: '' };
+  };
+
   // Validate form inputs
   const validateForm = () => {
     const errors = {};
@@ -56,7 +69,7 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
     if (!phone.trim()) errors.phone = 'Phone number is required';
 
     if (paymentMethod === "upi") {
-      const upiValidation = paymentService.validateUPIId(upiId);
+      const upiValidation = validateUPIId(upiId);
       if (!upiValidation.isValid) {
         errors.upiId = upiValidation.message;
       }
@@ -66,13 +79,88 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
     return Object.keys(errors).length === 0;
   };
 
+  // Create Razorpay order
+  const createRazorpayOrder = async (orderId) => {
+    const response = await fetch(`${BASE_URL}${UPI_GATEWAY_CREATE_API(orderId)}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ orderId, amount: cartTotals.subtotal * 100 }) // Convert to paise
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Failed to create Razorpay order');
+    }
+
+    return await response.json();
+  };
+
+  // Initialize Razorpay payment
+  const initializeRazorpayPayment = async (orderData, userData, upiData = {}) => {
+    return new Promise((resolve, reject) => {
+      const options = {
+        key: process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY_ID',
+        amount: orderData.amount,
+        currency: 'INR',
+        name: 'Women App',
+        description: `Order #${orderData.orderId}`,
+        order_id: orderData.razorpayOrderId,
+        prefill: {
+          name: userData.name || '',
+          email: userData.email || '',
+          contact: userData.phone || ''
+        },
+        notes: {
+          orderId: orderData.orderId,
+          upiApp: upiData.upiApp || '',
+          upiId: upiData.upiId || ''
+        },
+        handler: async (response) => {
+          try {
+            // Verify payment on backend
+            const verifyResponse = await fetch(`${BASE_URL}${UPI_GATEWAY_VERIFY_API}`, {
+              method: 'POST',
+              headers: getAuthHeaders(),
+              body: JSON.stringify({
+                orderId: orderData.orderId,
+                razorpayOrderId: orderData.razorpayOrderId,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature
+              })
+            });
+
+            if (!verifyResponse.ok) {
+              const error = await verifyResponse.json().catch(() => ({}));
+              throw new Error(error.message || 'Payment verification failed');
+            }
+
+            const result = await verifyResponse.json();
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            reject(new Error('Payment cancelled by user'));
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    });
+  };
+
+
+
   // Complete Razorpay payment initiation
   const initiateRazorpayPayment = async (orderId) => {
     try {
       setPaymentProcessing(true);
       
       // Create Razorpay order
-      const orderData = await paymentService.createRazorpayOrder(orderId);
+      const orderData = await createRazorpayOrder(orderId);
       
       // Get user details for prefill
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -81,7 +169,7 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
       const upiData = paymentMethod === 'upi' ? { upiApp, upiId } : {};
       
       // Initialize Razorpay payment
-      const result = await paymentService.initializeRazorpayPayment(
+      const result = await initializeRazorpayPayment(
         { ...orderData, orderId },
         { ...user, phone },
         upiData
@@ -101,25 +189,7 @@ function Checkout({ product, cartItems = [], onClose, onOrderPlaced }) {
     }
   };
 
-  // Process UPI payment directly (without Razorpay)
-  const processUPIPayment = async (orderId) => {
-    try {
-      setPaymentProcessing(true);
-      
-      const result = await paymentService.processUPIPayment(orderId, { upiId, upiApp });
-      alert('UPI payment successful! Transaction ID: ' + result.payment.transactionId);
-      
-      // Close checkout and trigger order placed callback
-      onOrderPlaced && onOrderPlaced();
-      onClose && onClose();
-      
-    } catch (error) {
-      console.error('UPI payment error:', error);
-      alert('UPI payment failed: ' + error.message);
-    } finally {
-      setPaymentProcessing(false);
-    }
-  };
+
 
   const placeOrder = async (e) => {
     e.preventDefault();
