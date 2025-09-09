@@ -28,11 +28,6 @@ function Login({ onClose, onAuthenticated }){
 
 
 
-  const triggerStorageEvent = () => {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("storage"));
-    }
-  };
 
 
 

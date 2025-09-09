@@ -128,7 +128,7 @@ const ProductList = () => {
       const token = localStorage.getItem('token');
       
       // Update the product
-      const response = await axios.put(`${BASE_URL}${PRODUCTS_API}/${editingProduct._id}`, productToUpdate, {
+      await axios.put(`${BASE_URL}${PRODUCTS_API}/${editingProduct._id}`, productToUpdate, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

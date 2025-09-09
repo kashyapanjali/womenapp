@@ -39,13 +39,16 @@ const AddProduct = () => {
     const user = localStorage.getItem('user');
 
     if (user) {
-      const userObj = JSON.parse(user);
+      // Debug: Check user data
+      console.log('User data:', JSON.parse(user));
     }
     
     // Test JWT token decoding (client-side)
     if (token) {
       try {
+        // Debug: Check JWT payload
         const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('JWT payload:', payload);
       } catch (e) {
         console.log('Failed to decode JWT:', e);
       }

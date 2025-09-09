@@ -12,14 +12,7 @@ function ProductStatus({ orderId, onClose }) {
     return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
   };
 
-  useEffect(() => {
-    if (orderId) {
-      fetchPaymentStatus();
-    }
-  }, [orderId]);
-
-
-  const fetchPaymentStatus = async () => {
+  const fetchPaymentStatus = React.useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -38,7 +31,13 @@ function ProductStatus({ orderId, onClose }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId]);
+
+  useEffect(() => {
+    if (orderId) {
+      fetchPaymentStatus();
+    }
+  }, [orderId, fetchPaymentStatus]);
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
