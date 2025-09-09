@@ -19,6 +19,11 @@ A simple React frontend for a women‑focused e‑commerce app. Users can browse
   - `export const BASE_URL = 'http://.........../api'`
 - Ensure the backend exposes `/api` and is running on port 5000.
 
+## Host
+--Database :"MongoDb Atlas"
+--Backend : "Render"
+--Frontend :"Netlify-https://neartowomen.netlify.app/"
+
 ## Features
 - Product listing and details
 - Search with live results
