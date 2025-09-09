@@ -169,7 +169,8 @@
   
   .cart-btn {
     border: none;
-    padding: 8px 12px;
+    /* padding: 8px 12px; */
+    /* margin-left: 10px; */
     color: white;
     display: flex;
     align-items: center;
@@ -210,6 +211,15 @@
     border: none;
     cursor: pointer;
     text-align: left;
+  }
+
+  .profile-icon-btn {
+    color: white;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
   }
   
 
@@ -310,6 +320,7 @@
     display: flex;
     border-radius: 4px;
     height: 20px;
+    max-width: calc(100vw - 150px); /* leave room for right icons */
   }
 
   .search-bar input {
@@ -325,7 +336,16 @@
   }
 
   .header-right {
-    gap:2px
+    gap: 0;
+    margin-left: auto;
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+  .header-center {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-right: 6px;
   }
   .user-button .user-greet {
     font-size: 5px;
@@ -335,5 +355,10 @@
     padding: 5px;
     border-radius: 5px;
     font-size: 14px;
+  }
+  
+  /* Add left margin for the user profile only on mobile */
+  .user-profile {
+    margin-left: 8px;
   }
 }

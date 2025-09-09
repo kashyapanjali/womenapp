@@ -36,6 +36,17 @@ api.interceptors.response.use(
 );
 
 
+const isSessionAuth = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const byQuery = (params.get('auth') || '').toLowerCase() === 'session';
+    const byFlag = localStorage.getItem('authScope') === 'session' || sessionStorage.getItem('forceSession') === '1';
+    return byQuery || byFlag;
+  } catch (_) {
+    return false;
+  }
+};
+
 export const authService = {
   // Register user
   registerUser: async (userData) => {
@@ -87,15 +98,27 @@ export const authService = {
         
         const dummyToken = 'dummy-token-' + Date.now();
         
-        localStorage.setItem('token', dummyToken);
-        localStorage.setItem('user', JSON.stringify(dummyUser));
+        if (isSessionAuth()) {
+          sessionStorage.setItem('authScope', 'session');
+          sessionStorage.setItem('token', dummyToken);
+          sessionStorage.setItem('user', JSON.stringify(dummyUser));
+        } else {
+          localStorage.setItem('token', dummyToken);
+          localStorage.setItem('user', JSON.stringify(dummyUser));
+        }
         
         return { token: dummyToken, user: dummyUser };
       }  
       const { token, user } = response.data;   
       // Store token and user data
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));  
+      if (isSessionAuth()) {
+        sessionStorage.setItem('authScope', 'session');
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('user', JSON.stringify(user));
+      } else {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+      }
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Login failed');
@@ -105,6 +128,9 @@ export const authService = {
 
   // Logout
   logout: () => {
+    // Clear both scopes
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
@@ -112,14 +138,16 @@ export const authService = {
 
   // Get current user
   getCurrentUser: () => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    const userSession = sessionStorage.getItem('user');
+    if (userSession) return JSON.parse(userSession);
+    const userLocal = localStorage.getItem('user');
+    return userLocal ? JSON.parse(userLocal) : null;
   },
 
 
   // Check if user is authenticated
   isAuthenticated: () => {
-    return !!localStorage.getItem('token');
+    return !!(sessionStorage.getItem('token') || localStorage.getItem('token'));
   },
 
 

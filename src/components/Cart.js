@@ -33,12 +33,12 @@ function Cart({ cart, closeCart, onAddToCart, onCheckout, onCheckoutSingle }){
     return user ? JSON.parse(user) : null;
   };
 
-  // Decode JWT token to get user ID (more secure approach)
+  // Decode JWT token to get user ID 
   const getUserIdFromToken = () => {
     const token = localStorage.getItem('token');
     if (!token) return null;
     try {
-      // Decode JWT token (base64 decode the payload part)
+      // Decode JWT token 
       const payload = token.split('.')[1];
       const decodedPayload = JSON.parse(atob(payload));
       return decodedPayload.userId || decodedPayload.id || decodedPayload._id;

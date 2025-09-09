@@ -37,9 +37,9 @@ function App() {
   
   // Current user
   const [user, setUser] = useState(() => {
-    if (localStorage.getItem("user")) {
-      return JSON.parse(localStorage.getItem("user"));
-    }
+    const scope = sessionStorage.getItem('authScope') === 'session' ? 'session' : 'local';
+    const fromStore = scope === 'session' ? sessionStorage.getItem('user') : localStorage.getItem('user');
+    if (fromStore) return JSON.parse(fromStore);
     return null;
   });
   
@@ -49,6 +49,29 @@ function App() {
   const [showOrders, setShowOrders] = useState(false);
 
   const isAdmin = user && user.role === "admin";
+  const getScope = () => (sessionStorage.getItem('authScope') === 'session' ? 'session' : 'local');
+  const getViewOverride = () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const view = (params.get('view') || '').toLowerCase();
+      if (view === 'shop' || view === 'store' || view === 'ecom') return 'shop';
+      if (view === 'admin' || view === 'dashboard') return 'admin';
+      return null;
+    } catch (_) {
+      return null;
+    }
+  };
+  const viewOverride = getViewOverride();
+  const preferredView = (() => {
+    try {
+      const scope = getScope();
+      return (scope === 'session' ? sessionStorage.getItem('preferredView') : localStorage.getItem('preferredView')) || null;
+    } catch (_) {
+      return null;
+    }
+  })();
+  // by the Admin session it recognize and give admin pannel
+  const showAdminUI = isAdmin && (viewOverride === 'admin' || preferredView === 'admin');
 
   // normalize various cart payload shapes to an array of items
   const normalizeCart = (data) => {
@@ -130,16 +153,18 @@ function App() {
 
   // Cart API helpers (for profile users)
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const scope = sessionStorage.getItem('authScope') === 'session' ? 'session' : 'local';
+    const token = scope === 'session' ? sessionStorage.getItem('token') : localStorage.getItem('token');
     return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
   };
 
 
   const fetchCart = async () => {
     try {
-      // Read user directly from localStorage
-      const userData = localStorage.getItem('user');
-      const token = localStorage.getItem('token');
+      // Read user directly from the chosen scope
+      const scope = sessionStorage.getItem('authScope') === 'session' ? 'session' : 'local';
+      const userData = scope === 'session' ? sessionStorage.getItem('user') : localStorage.getItem('user');
+      const token = scope === 'session' ? sessionStorage.getItem('token') : localStorage.getItem('token');
       const parsedUser = userData ? JSON.parse(userData) : null;
       const userId = parsedUser?._id || parsedUser?.id;
       
@@ -154,8 +179,13 @@ function App() {
         if (res.status === 401) {
           console.log('User not authorized, clearing auth data');
           // Clear invalid auth data
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
+          if (scope === 'session') {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
           setUser(null);
           setCart([]);
           return;
@@ -224,8 +254,9 @@ function App() {
   // Listen for authentication changes
   useEffect(() => {
     const handleStorageChange = () => {
-      const userData = localStorage.getItem("user");
-      const token = localStorage.getItem("token");
+      const scope = sessionStorage.getItem('authScope') === 'session' ? 'session' : 'local';
+      const userData = scope === 'session' ? sessionStorage.getItem('user') : localStorage.getItem('user');
+      const token = scope === 'session' ? sessionStorage.getItem('token') : localStorage.getItem('token');
       
       if (userData && token) {
         const parsed = JSON.parse(userData);
@@ -281,24 +312,16 @@ function App() {
 
   const cartItemCount = cart.reduce((total, item) => total + Number(item.quantity || 0), 0);
 
-  // Debug: Log authentication status
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    console.log('Auth Status:', { 
-      hasUser: !!userData, 
-      hasToken: !!token,
-      user: userData ? JSON.parse(userData) : null 
-    });
-  }, [user]);
-
   // Filter products based on category (using category ID from database)
   const getFilteredProducts = () => {
-    const source = searchResults !== null ? searchResults : products;
-    if (activeCategory === "all") {
-      return source;
+    // When search is active, show search results as-is and ignore category filter
+    if (searchResults !== null) {
+      return searchResults;
     }
-    return source.filter((product) => {
+    if (activeCategory === "all") {
+      return products;
+    }
+    return products.filter((product) => {
       const productCategory = product.category?._id || product.category;
       return productCategory === activeCategory;
     });
@@ -318,13 +341,14 @@ function App() {
         <SignInSignup
           onClose={() => setShowSignIn(false)}
           onAuthenticated={() => {
-            const newUser = JSON.parse(localStorage.getItem("user"));
+            const scope = sessionStorage.getItem('authScope') === 'session' ? 'session' : 'local';
+            const newUser = JSON.parse((scope === 'session' ? sessionStorage.getItem("user") : localStorage.getItem("user")) || 'null');
             setUser(newUser);
             setShowSignIn(false);
             fetchCart();
           }}
         />
-      ) : isAdmin ? (
+      ) : showAdminUI ? (
         <Admin />
       ) : showCheckout ? (
         <>

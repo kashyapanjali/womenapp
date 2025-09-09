@@ -39,7 +39,12 @@ function Orders({ onBack }) {
       const res = await fetch(`${BASE_URL}${USER_ORDERS_API(userId)}`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to load orders');
       const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.orders)
+          ? data.orders
+          : [];
+      setOrders(list);
     } catch (e) {
       setError(e.message || 'Failed to load orders');
     } finally {

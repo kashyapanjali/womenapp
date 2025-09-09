@@ -13,15 +13,17 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
   const [showUserMenu, setShowUserMenu] = useState(false);
   const windowWidth = propWindowWidth || window.innerWidth;
   const isMobile = !isWeb || windowWidth < 768;
+  const scope = sessionStorage.getItem('authScope') === 'session' ? 'session' : 'local';
 
   // Debounce and request cancellation refs
   const debounceRef = useRef(null);
   const requestControllerRef = useRef(null);
 
-  //useEffect to get the user data from the local storage
+  //useEffect to get the user data from storage (prefer session)
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
+    const scope = sessionStorage.getItem('authScope') === 'session' ? 'session' : 'local';
+    const userData = scope === 'session' ? sessionStorage.getItem('user') : localStorage.getItem('user');
+    const token = scope === 'session' ? sessionStorage.getItem('token') : localStorage.getItem('token');
     if (userData && token) {
       setUser(JSON.parse(userData));
     } else {
@@ -32,8 +34,9 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
   //useEffect to listen for storage changes
   useEffect(() => {
     const handleStorageChange = () => {
-      const userData = localStorage.getItem('user');
-      const token = localStorage.getItem('token');
+      const scope = sessionStorage.getItem('authScope') === 'session' ? 'session' : 'local';
+      const userData = scope === 'session' ? sessionStorage.getItem('user') : localStorage.getItem('user');
+      const token = scope === 'session' ? sessionStorage.getItem('token') : localStorage.getItem('token');
       if (userData && token) {
         setUser(JSON.parse(userData));
       } else {
@@ -54,6 +57,32 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
     window.location.reload();
   };
 
+  const goAdmin = () => {
+    try {
+      if (scope === 'session') {
+        sessionStorage.setItem('preferredView', 'admin');
+      } else {
+        localStorage.setItem('preferredView', 'admin');
+      }
+    } catch (_) {}
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', 'admin');
+    window.location.href = url.toString();
+  };
+
+  const goShop = () => {
+    try {
+      if (scope === 'session') {
+        sessionStorage.setItem('preferredView', 'shop');
+      } else {
+        localStorage.setItem('preferredView', 'shop');
+      }
+    } catch (_) {}
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', 'shop');
+    window.location.href = url.toString();
+  };
+
   const performSearch = async (text, minPrice, maxPrice, category) => {
     const trimmed = (text || "").trim();
 
@@ -70,15 +99,7 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
       return;
     }
 
-    // Enforce min 2 characters when only text is used
-    const onlyText = trimmed !== "" &&
-      (minPrice === undefined || minPrice === null || minPrice === "") &&
-      (maxPrice === undefined || maxPrice === null || maxPrice === "") &&
-      (category === undefined || category === null || category === "");
-    if (onlyText && trimmed.length < 2) {
-      return; // wait for more input to avoid spamming server
-    }
-
+    // Allow searches with even 1 character to avoid blocking user intent
     // Cancel any in-flight request
     if (requestControllerRef.current) {
       requestControllerRef.current.abort();
@@ -101,7 +122,13 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
       });
       if (!res.ok) throw new Error("Search request failed");
       const data = await res.json();
-      onSearch(Array.isArray(data) ? data : []);
+      // Backend returns { products, pagination } for search. Fallback to array if older backend.
+      const results = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.products)
+          ? data.products
+          : [];
+      onSearch(results);
     } catch (err) {
       if (err.name === 'AbortError') return; // ignore aborted requests
       console.error("Search error:", err);
@@ -159,16 +186,29 @@ function Header({ cartItemCount, toggleCart, onSearch, isWeb, windowWidth: propW
         <div className="header-right">
           {user ? (
             <div className="user-profile">
-              <button onClick={() => setShowUserMenu(!showUserMenu)} className="user-button">
-                <div>
-                  <span className="user-greet">Hello, {user.name}<FaChevronDown /></span>
-                </div>
-              </button>
+              {isMobile ? (
+                <button onClick={() => setShowUserMenu(!showUserMenu)} className="profile-icon-btn" aria-label="Account">
+                  <FaUser /> <FaChevronDown className="dropdown-icon" />
+                </button>
+              ) : (
+                <button onClick={() => setShowUserMenu(!showUserMenu)} className="user-button">
+                  <div>
+                    <span className="user-greet">Hello, {user.name}<FaChevronDown /></span>
+                  </div>
+                </button>
+              )}
               {showUserMenu && (
                 <div className="user-dropdown">
                   <button><FaUser /> Profile</button>
                   <button onClick={onOrdersClick}><FaFileAlt /> Orders</button>
                   <button><FaHeart /> Wishlist</button>
+                  {user.role === 'admin' && (
+                    <>
+                      <hr />
+                      <button onClick={goAdmin}>Admin Panel</button>
+                      <button onClick={goShop}>Shop View</button>
+                    </>
+                  )}
                   <hr />
                   <button className="logout" onClick={handleLogout}><FaSignOutAlt /> Logout</button>
                 </div>
