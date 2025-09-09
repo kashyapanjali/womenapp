@@ -3,7 +3,7 @@
 // API endpoint exports for frontend use
 // Base URL (read from environment with fallback)
 // Create .env and set REACT_APP_API_BASE_URL, e.g. http://localhost:5000/api
-export const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001/api';
+export const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
 
 // User Authentication & Profile
 export const REGISTER_USER_API = '/users/register';
