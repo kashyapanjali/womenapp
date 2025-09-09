@@ -316,11 +316,11 @@
   }
 
   .search-bar {
-    width: 120px;
+    /* width: 120px; */
     display: flex;
     border-radius: 4px;
     height: 20px;
-    max-width: calc(100vw - 150px); /* leave room for right icons */
+    max-width: calc(100vw - 150px); 
   }
 
   .search-bar input {
