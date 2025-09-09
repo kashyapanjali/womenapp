@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import "./Order.css";
 import { BASE_URL, ADMIN_ORDERS_API, ADMIN_UPDATE_ORDER_STATUS_API } from "../../api/api";
 
@@ -12,7 +12,7 @@ export default function Order() {
     return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -25,11 +25,11 @@ export default function Order() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
 
   const updateStatus = async (orderId, status) => {
     try {

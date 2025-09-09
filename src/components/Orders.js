@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BASE_URL, USER_ORDERS_API, ORDER_DETAILS_API, UPI_PAYMENT_STATUS_API } from "../api/api";
+import { BASE_URL, USER_ORDERS_API, UPI_PAYMENT_STATUS_API } from "../api/api";
 import ProductStatus from "./ProductStatus";
 import "./Checkout.css";
 
