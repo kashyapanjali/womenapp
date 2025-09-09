@@ -25,12 +25,6 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // If API server is not running, use dummy data for testing
-    // when network fails
-    if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
-      console.warn('API server not available, using dummy authentication for testing');
-      return Promise.resolve({ data: { success: true, message: 'Dummy response' } });
-    }
     return Promise.reject(error);
   }
 );
@@ -52,10 +46,6 @@ export const authService = {
   registerUser: async (userData) => {
     try {
       const response = await api.post(REGISTER_USER_API, userData);  
-      // For testing: if API is not available, simulate success
-      if (response.data.message === 'Dummy response') {
-        return { success: true, message: 'User registered successfully (dummy)' };
-      }   
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Registration failed');
@@ -67,10 +57,6 @@ export const authService = {
   registerAdmin: async (adminData) => {
     try {
       const response = await api.post(REGISTER_ADMIN_API, adminData);  
-      // For testing: if API is not available, simulate success
-      if (response.data.message === 'Dummy response') {
-        return { success: true, message: 'Admin registered successfully (dummy)' };
-      }  
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Admin registration failed');
@@ -83,32 +69,6 @@ export const authService = {
   login: async (credentials) => {
     try {
       const response = await api.post(LOGIN_API, credentials);  
-      // For testing: if API is not available, simulate login
-      if (response.data.message === 'Dummy response') {
-        // Extract name from email 
-        const emailPart = credentials.email.split('@')[0];
-        const name = emailPart.replace(/\d+/g, ''); // Remove all numbers
-        
-        const dummyUser = {
-          id: '1',
-          name: name || emailPart, // Use cleaned name or fallback to email part
-          email: credentials.email,
-          role: credentials.email.includes('admin') ? 'admin' : 'user'
-        };
-        
-        const dummyToken = 'dummy-token-' + Date.now();
-        
-        if (isSessionAuth()) {
-          sessionStorage.setItem('authScope', 'session');
-          sessionStorage.setItem('token', dummyToken);
-          sessionStorage.setItem('user', JSON.stringify(dummyUser));
-        } else {
-          localStorage.setItem('token', dummyToken);
-          localStorage.setItem('user', JSON.stringify(dummyUser));
-        }
-        
-        return { token: dummyToken, user: dummyUser };
-      }  
       const { token, user } = response.data;   
       // Store token and user data
       if (isSessionAuth()) {
