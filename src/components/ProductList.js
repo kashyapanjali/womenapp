@@ -4,7 +4,7 @@ import ProductCard from "./ProductCard";
 
 
 //products and addToproduct prop receiving by productList
-function ProductList({ products, onAddToCart, onBuyNow }){
+function ProductList({ products, onAddToCart, onBuyNow, onProductClick }){
   return (
     <div className="product-list">
       {products.length > 0 ? (
@@ -14,6 +14,7 @@ function ProductList({ products, onAddToCart, onBuyNow }){
             product={product}
             onAddToCart={onAddToCart}
             onBuyNow={onBuyNow}
+            onProductClick={onProductClick}
           />
         ))
       ) : (

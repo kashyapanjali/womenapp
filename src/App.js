@@ -250,6 +250,19 @@ function App() {
     setShowCart(false);
     setShowCheckout(true);
   };
+
+  // Handle product click navigation - filter products by category or search
+  const handleProductClick = (product) => {
+    if (product.category) {
+      // If product has a category, filter by that category
+      setActiveCategory(product.category._id || product.category);
+    } else if (product.name) {
+      // If no category, search by product name
+      handleSearch(product.name);
+    }
+    // Close cart if it's open
+    setShowCart(false);
+  };
   
   // Listen for authentication changes
   useEffect(() => {
@@ -395,6 +408,7 @@ function App() {
               closeCart={() => setShowCart(false)}
               onAddToCart={fetchCart}
               onCheckout={handleCartCheckout}
+              onProductClick={handleProductClick}
             />
           )}
         </>
@@ -447,6 +461,7 @@ function App() {
                 isWeb={isWeb}
                 windowWidth={windowWidth}
                 onBuyNow={handleBuyNow}
+                onProductClick={handleProductClick}
               />
             )}
           </div>
@@ -460,6 +475,7 @@ function App() {
               closeCart={() => setShowCart(false)}
               onAddToCart={fetchCart}
               onCheckout={handleCartCheckout}
+              onProductClick={handleProductClick}
             />
           )}
         </>

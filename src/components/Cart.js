@@ -12,7 +12,7 @@ import { BASE_URL, UPDATE_CART_ITEM_API, REMOVE_FROM_CART_API, CLEAR_CART_API } 
 
 
 // Cart component
-function Cart({ cart, closeCart, onAddToCart, onCheckout, onCheckoutSingle }){
+function Cart({ cart, closeCart, onAddToCart, onCheckout, onCheckoutSingle, onProductClick }){
   const [localCart, setLocalCart] = useState(cart || []);
   const [loading, setLoading] = useState(false);
 
@@ -170,6 +170,24 @@ function Cart({ cart, closeCart, onAddToCart, onCheckout, onCheckoutSingle }){
     onCheckoutSingle(product);
   };
 
+  // Handle product click to redirect to product list
+  const handleProductClick = (item) => {
+    if (!onProductClick) return;
+    const product = {
+      _id: item.productId || item.product?._id || item._id,
+      id: item.productId || item.product?._id || item._id,
+      name: item.name || item.product?.name,
+      image: item.image || item.product?.image,
+      price: Number(item.price || item.product?.price || 0),
+      description: item.description || item.product?.description,
+      brand: item.brand || item.product?.brand,
+      category: item.category || item.product?.category,
+      countInStock: item.countInStock || item.product?.countInStock,
+      isFeatures: item.isFeatures || item.product?.isFeatures,
+    };
+    onProductClick(product);
+  };
+
   
   //total amount of product
   const total = (localCart || []).reduce(
@@ -203,14 +221,51 @@ function Cart({ cart, closeCart, onAddToCart, onCheckout, onCheckoutSingle }){
                   <img
                     src={item.image || item.product?.image || "https://placehold.co/100x100"}
                     alt={item.name || item.product?.name || "Product"}
-                    style={{ cursor: onCheckoutSingle ? 'pointer' : 'default' }}
-                    onClick={() => handleCheckoutSingle(item)}
+                    title={onProductClick ? "Click to view similar products" : (onCheckoutSingle ? "Click to buy now" : "")}
+                    style={{ 
+                      cursor: (onCheckoutSingle || onProductClick) ? 'pointer' : 'default',
+                      transition: 'transform 0.2s ease, opacity 0.2s ease',
+                      border: (onProductClick || onCheckoutSingle) ? '2px solid transparent' : 'none',
+                      borderRadius: '8px'
+                    }}
+                    onClick={() => onProductClick ? handleProductClick(item) : handleCheckoutSingle(item)}
+                    onMouseEnter={(e) => {
+                      if (onProductClick || onCheckoutSingle) {
+                        e.target.style.transform = 'scale(1.05)';
+                        e.target.style.opacity = '0.9';
+                        e.target.style.border = '2px solid #e84a80';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (onProductClick || onCheckoutSingle) {
+                        e.target.style.transform = 'scale(1)';
+                        e.target.style.opacity = '1';
+                        e.target.style.border = '2px solid transparent';
+                      }
+                    }}
                   />
                   <div className="cart-info">
                     <p 
                       className="cart-name"
-                      style={{ cursor: onCheckoutSingle ? 'pointer' : 'default' }}
-                      onClick={() => handleCheckoutSingle(item)}
+                      title={onProductClick ? "Click to view similar products" : (onCheckoutSingle ? "Click to buy now" : "")}
+                      style={{ 
+                        cursor: (onCheckoutSingle || onProductClick) ? 'pointer' : 'default',
+                        transition: 'color 0.2s ease, text-decoration 0.2s ease',
+                        textDecoration: (onProductClick || onCheckoutSingle) ? 'underline' : 'none'
+                      }}
+                      onClick={() => onProductClick ? handleProductClick(item) : handleCheckoutSingle(item)}
+                      onMouseEnter={(e) => {
+                        if (onProductClick || onCheckoutSingle) {
+                          e.target.style.color = '#e84a80';
+                          e.target.style.textDecoration = 'underline';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (onProductClick || onCheckoutSingle) {
+                          e.target.style.color = 'inherit';
+                          e.target.style.textDecoration = 'underline';
+                        }
+                      }}
                     >
                       {item.name || item.product?.name}
                     </p>
