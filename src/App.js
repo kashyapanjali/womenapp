@@ -115,15 +115,37 @@ function App() {
     try {
       setProductsLoading(true);
       setProductsError("");
-      const response = await fetch(`${BASE_URL}${PRODUCTS_API}`);
+      
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
+      const response = await fetch(`${BASE_URL}${PRODUCTS_API}`, {
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch products');
+        throw new Error(`Failed to fetch products: ${response.status}`);
       }
       const data = await response.json();
       setProducts(data);
     } catch (error) {
       console.error('Error fetching products:', error);
-      setProductsError('Backend server not available. Please start your backend server on port 5000.');
+      
+      if (error.name === 'AbortError') {
+        setProductsError('Request timed out. The server is taking too long to respond.');
+      } else if (error.message.includes('Failed to fetch')) {
+        setProductsError('Unable to connect to server. Please check your internet connection.');
+      } else {
+        setProductsError('Backend server not available. Please try again later.');
+      }
+      
       // Set some sample products for testing
       setProducts([
         {
@@ -435,7 +457,32 @@ function App() {
 
             {productsLoading ? (
               <div style={{ textAlign: 'center', padding: '40px' }}>
-                <p>Loading products...</p>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  flexDirection: 'column',
+                  gap: '20px'
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid #f3f3f3',
+                    borderTop: '4px solid #e84a80',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}></div>
+                  <p style={{ margin: 0, color: '#666' }}>Loading products...</p>
+                  <p style={{ margin: 0, fontSize: '14px', color: '#999' }}>
+                    This may take a moment due to server cold start
+                  </p>
+                </div>
+                <style>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
               </div>
             ) : productsError ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>
